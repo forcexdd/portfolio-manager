@@ -1,0 +1,27 @@
+{{template "base" .}}
+
+{{define "title"}}
+Manager
+{{end}}
+
+{{define "main"}}
+<div>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Price</th>
+        </tr>
+        {{ range $stock := .stocks }}
+        <tr>
+            <th>{{ $stock.Name }}</th>
+            <th>{{ $stock.Quantity }}</th>
+            <th>{{ $stock.Price }}</th>
+        </tr>
+        {{ end }}
+    </table>
+    <div>
+        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart">
+    </div>
+</div>
+{{ end }}

@@ -1,0 +1,48 @@
+{{template "base" .}}
+
+{{define "title"}}
+Choose Portfolio
+{{end}}
+
+{{define "main"}}
+<link rel="stylesheet" href="../static/portfolioCreatorForm.css" type="text/css">
+<form class="row">
+    <label>
+        Name:
+        <input type="text" id="portfolioNameInput" placeholder="Portfolio Name"/>
+    </label>
+    <br/>
+    <div class="row">
+        Select Stocks:
+        <label>
+            <select id="selectStocks">
+                <option disabled="disabled" selected="selected">--SELECT--</option>
+                {{ range $stock := .stocks }}
+                <option value={{$stock.Name}}> {{ $stock.Name }} </option>
+                {{ end }}
+            </select>
+        </label>
+
+        <label>
+                Quantity:
+                <input id="quantityInput" type="number" value="1" min="1"/>
+        </label>
+
+        <label>
+            <button id="addStockButton" type="button">
+                Add Stock
+            </button>
+        </label>
+    </div>
+    <div class="row">
+        <table id="chosenList">
+            <tr>
+                <th>Name</th>
+                <th>Quantity</th>
+                <th>Removal</th>
+            </tr>
+        </table>
+    </div>
+</form>
+<script src="../static/portfolioCreatorForm.js" ></script>
+{{ end }}
