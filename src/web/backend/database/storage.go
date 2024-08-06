@@ -164,7 +164,7 @@ func (s *Storage) createPortfoliosTable() error {
 	CREATE TABLE IF NOT EXISTS portfolios (
 		id SERIAL PRIMARY KEY,
 	    name VARCHAR(64) NOT NULL,
-		user_id SERIAL NOT NULL,
+		user_id INT NOT NULL,
 	    FOREIGN KEY (user_id) REFERENCES users(id)
 	);`
 
@@ -220,8 +220,8 @@ func (s *Storage) createPortfolioStocksTable() error {
 	CREATE TABLE IF NOT EXISTS portfolio_stocks (
 		id SERIAL PRIMARY KEY,
 		quantity INT NOT NULL,
-		portfolio_id SERIAL NOT NULL,
-		stock_id SERIAL NOT NULL,
+		portfolio_id INT NOT NULL,
+		stock_id INT NOT NULL,
 		FOREIGN KEY (portfolio_id) REFERENCES portfolios(id),
 		FOREIGN KEY (stock_id) REFERENCES stocks(id)
 	);`
@@ -250,7 +250,7 @@ func (s *Storage) createPortfolioStocksRelationshipTable() error {
 	CREATE TABLE IF NOT EXISTS portfolio_stocks_relationship (
 		id SERIAL PRIMARY KEY,
 		quantity INT NOT NULL,
-		portfolio_stocks_id SERIAL NOT NULL,
+		portfolio_stocks_id INT NOT NULL,
 		FOREIGN KEY (portfolio_stocks_id) REFERENCES portfolio_stocks(id)
 	);`
 
