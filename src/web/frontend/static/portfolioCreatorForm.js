@@ -1,7 +1,7 @@
 let addStockButtonHTML = document.getElementById("addStockButton");
 let quantityHTML = document.getElementById("quantityInput");
 let stockNameHTML = document.getElementById("selectStocks")
-let currentChosenTableHTML = document.getElementById("chosenList");
+let chosenListTableTbodyHTML = document.getElementById("chosenListTbody");
 
 let chosenStocks = [];
 
@@ -11,43 +11,43 @@ function updateList(listOfObjects) {
         let name = obj.name;
         let quantity = obj.quantity;
 
-        let existingRow = document.getElementById(name);
-        if (existingRow)
-        {
-            let existingQuantityHTML = existingRow.getElementsByClassName("quantity")[0];
-            existingQuantityHTML.innerText = quantity;
+        let existingRow = chosenListTableTbodyHTML.querySelector(`[id='${name}']`);
+
+        if (existingRow) {
+            existingRow.querySelector("[id='quantity']").innerText = quantity;
             return;
         }
 
-        let row = document.createElement("tr");
-        row.id = name;
-        let removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.onclick = (e) => {
-            listOfObjects = listOfObjects.filter((element) => element.name !== name)
-            updateList(listOfObjects);
-            document.removeChild(row);
-        }
-
-        let thName = document.createElement("th");
-        thName.innerText = name;
-
-        let thQuantity = document.createElement("th");
-        thQuantity.innerText = quantity;
-        thQuantity.className = "quantity";
-
-        let thButton = document.createElement("th");
-        thButton.appendChild(removeButton);
-
-        row.appendChild(thName);
-        row.appendChild(thQuantity);
-        row.appendChild(removeButton);
-
-        currentChosenTableHTML.appendChild(row);
+        //
+        // let row = document.createElement("tr");
+        // row.id = name;
+        // let removeButton = document.createElement("button");
+        // removeButton.type = "button";
+        // removeButton.onclick = (e) => {
+        //     listOfObjects = listOfObjects.filter((element) => element.name !== name)
+        //     updateList(listOfObjects);
+        //     document.removeChild(row);
+        // }
+        //
+        // let thName = document.createElement("th");
+        // thName.innerText = name;
+        //
+        // let thQuantity = document.createElement("th");
+        // thQuantity.innerText = quantity;
+        // thQuantity.className = "quantity";
+        //
+        // let thButton = document.createElement("th");
+        // thButton.appendChild(removeButton);
+        //
+        // row.appendChild(thName);
+        // row.appendChild(thQuantity);
+        // row.appendChild(removeButton);
+        //
+        // currentChosenTableHTML.appendChild(row);
     });
 }
 
-addStockButtonHTML.addEventListener("click", (e) => {
+addStockButtonHTML.addEventListener("click", (_) => {
     if (stockNameHTML.value === "--SELECT--")
         return;
 
@@ -55,7 +55,17 @@ addStockButtonHTML.addEventListener("click", (e) => {
     obj["name"] = stockNameHTML.value;
     obj["quantity"] =quantityHTML.value;
 
-    chosenStocks.filter((e) => e.name !== obj.name)
-    chosenStocks.push(obj);
+    let flag = false;
+    chosenStocks.forEach((e) => {
+        if (e.name === obj.name)
+        {
+            e.value = obj.value;
+            flag = true;
+        }
+    })
+
+    if (!flag)
+        chosenStocks.push(obj);
+
     updateList(chosenStocks);
 })
