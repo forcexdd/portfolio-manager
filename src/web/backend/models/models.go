@@ -21,7 +21,6 @@ type Stock struct {
 
 type PortfolioStock struct {
 	Id          int // PK
-	Quantity    int
 	PortfolioId int // FK
 	StockId     int // FK
 }
