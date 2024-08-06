@@ -219,7 +219,6 @@ func (s *Storage) createPortfolioStocksTable() error {
 	query := `
 	CREATE TABLE IF NOT EXISTS portfolio_stocks (
 		id SERIAL PRIMARY KEY,
-		quantity INT NOT NULL,
 		portfolio_id INT NOT NULL,
 		stock_id INT NOT NULL,
 		FOREIGN KEY (portfolio_id) REFERENCES portfolios(id),
