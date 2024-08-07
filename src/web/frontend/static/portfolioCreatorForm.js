@@ -1,13 +1,11 @@
 let addStockButtonHTML = document.getElementById("addStockButton");
+let stockNameInputHTML = document.getElementById("selectStocks");
 let quantityHTML = document.getElementById("quantityInput");
-let stockNameHTML = document.getElementById("selectStocks")
 let chosenListTableTbodyHTML = document.getElementById("chosenListTbody");
 
-let chosenStocks = [];
-
-function updateList(listOfObjects) {
-    console.log(listOfObjects)
-    listOfObjects.forEach((obj) => {
+function renderStocks(stocks) {
+    console.log(stocks);
+    stocks.forEach((obj) => {
         let name = obj.name;
         let quantity = obj.quantity;
 
@@ -18,54 +16,60 @@ function updateList(listOfObjects) {
             return;
         }
 
-        //
-        // let row = document.createElement("tr");
-        // row.id = name;
-        // let removeButton = document.createElement("button");
-        // removeButton.type = "button";
-        // removeButton.onclick = (e) => {
-        //     listOfObjects = listOfObjects.filter((element) => element.name !== name)
-        //     updateList(listOfObjects);
-        //     document.removeChild(row);
-        // }
-        //
-        // let thName = document.createElement("th");
-        // thName.innerText = name;
-        //
-        // let thQuantity = document.createElement("th");
-        // thQuantity.innerText = quantity;
-        // thQuantity.className = "quantity";
-        //
-        // let thButton = document.createElement("th");
-        // thButton.appendChild(removeButton);
-        //
-        // row.appendChild(thName);
-        // row.appendChild(thQuantity);
-        // row.appendChild(removeButton);
-        //
-        // currentChosenTableHTML.appendChild(row);
+        let row = document.createElement("tr");
+        row.id = name;
+        let removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.innerText = "Remove";
+        removeButton.onclick = (e) => {
+            stocks = stocks.filter((element) => element.name !== name);
+            chosenListTableTbodyHTML.querySelector(`[id='${name}']`).remove();
+            updateStocks(stocks);
+            renderStocks(stocks);
+        }
+
+        let thName = document.createElement("th");
+        thName.innerText = name;
+
+        let thQuantity = document.createElement("th");
+        thQuantity.innerText = quantity;
+        thQuantity.id = "quantity";
+
+        let thButton = document.createElement("th");
+        thButton.appendChild(removeButton);
+
+        row.appendChild(thName);
+        row.appendChild(thQuantity);
+        row.appendChild(removeButton);
+
+        chosenListTableTbodyHTML.appendChild(row);
     });
 }
 
+let chosenStocks = [];
+
+function updateStocks(array) {
+    chosenStocks = array;
+}
+
 addStockButtonHTML.addEventListener("click", (_) => {
-    if (stockNameHTML.value === "--SELECT--")
+    if (stockNameInputHTML.value === "--SELECT--")
         return;
 
     let obj = {};
-    obj["name"] = stockNameHTML.value;
+    obj["name"] = stockNameInputHTML.value;
     obj["quantity"] =quantityHTML.value;
 
-    let flag = false;
+    let newObject = true;
     chosenStocks.forEach((e) => {
-        if (e.name === obj.name)
-        {
-            e.value = obj.value;
-            flag = true;
+        if (e.name === obj.name) {
+            e.quantity = obj.quantity;
+            newObject = false;
         }
     })
 
-    if (!flag)
+    if (newObject)
         chosenStocks.push(obj);
 
-    updateList(chosenStocks);
+    renderStocks(chosenStocks);
 })
