@@ -11,15 +11,21 @@ type Storage struct {
 }
 
 func CreateNewStorage(connString string) (*Storage, error) {
-	var storage Storage
-	var err error
-
-	storage.db, err = sql.Open("postgres", connString)
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		return nil, err
 	}
 
-	// Checking connection
+	storage := &Storage{db: db}
+
+	// defer closing db connection with error handling
+	defer func() {
+		closeErr := storage.db.Close()
+		if closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+
 	err = storage.db.Ping()
 	if err != nil {
 		return nil, err
@@ -30,25 +36,26 @@ func CreateNewStorage(connString string) (*Storage, error) {
 		return nil, err
 	}
 
-	err = storage.db.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	return &storage, nil
+	return storage, err
 }
 
 func DeleteStorage(connString string) error {
-	var storageToDelete Storage
-	var err error
-
-	storageToDelete.db, err = sql.Open("postgres", connString)
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		return err
 	}
 
-	// Checking connection
-	err = storageToDelete.db.Ping()
+	storageToDelete := &Storage{db: db}
+
+	// defer closing db connection with error handling
+	defer func() {
+		closeErr := storageToDelete.db.Close()
+		if closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+
+	err = db.Ping()
 	if err != nil {
 		return err
 	}
@@ -58,12 +65,7 @@ func DeleteStorage(connString string) error {
 		return err
 	}
 
-	err = storageToDelete.db.Close()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func getAllTables() map[string]string {
@@ -111,12 +113,13 @@ func getAllTables() map[string]string {
 	}
 }
 
+// Returns an order in which tables must be created
 func getTablesOrder() []string {
 	return []string{"users", "portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "index_stocks"}
 }
 
 func (s *Storage) dropAllTables() error {
-	for table := range getAllTables() {
+	for _, table := range getTablesOrder() {
 		err := s.DropTable(table)
 		if err != nil {
 			return err
@@ -138,30 +141,24 @@ func (s *Storage) addAllTables() error {
 }
 
 func (s *Storage) DropTable(tableName string) error {
-	_, ok := getAllTables()[tableName]
-	if !ok {
+	_, isTable := getAllTables()[tableName]
+	if !isTable {
 		return errors.New("table not found")
 	}
 
 	query := "DROP TABLE IF EXISTS " + tableName + " CASCADE;"
 	_, err := s.db.Exec(query)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (s *Storage) CreateTable(tableName string) error {
-	query, ok := getAllTables()[tableName]
-	if !ok {
+	query, isTable := getAllTables()[tableName]
+	if !isTable {
 		return errors.New("table not found")
 	}
 
 	_, err := s.db.Exec(query)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
