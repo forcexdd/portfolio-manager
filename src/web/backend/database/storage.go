@@ -70,15 +70,10 @@ func DeleteStorage(connString string) error {
 
 func getAllTables() map[string]string {
 	return map[string]string{
-		"users": `
-		CREATE TABLE IF NOT EXISTS users (
-			id SERIAL PRIMARY KEY
-		);`,
 		"portfolios": `
 		CREATE TABLE IF NOT EXISTS portfolios (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(64) NOT NULL,
-			user_id INT NOT NULL,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		);`,
 		"stocks": `
@@ -115,7 +110,7 @@ func getAllTables() map[string]string {
 
 // Returns an order in which tables must be created
 func getTablesOrder() []string {
-	return []string{"users", "portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "index_stocks"}
+	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "index_stocks"}
 }
 
 func (s *Storage) dropAllTables() error {

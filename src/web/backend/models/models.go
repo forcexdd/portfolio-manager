@@ -2,14 +2,9 @@ package models
 
 import "time"
 
-type User struct {
-	Id int // PK
-}
-
 type Portfolio struct {
-	Id     int // PK
-	Name   string
-	UserId int // FK
+	Id   int // PK
+	Name string
 }
 
 type Stock struct {
