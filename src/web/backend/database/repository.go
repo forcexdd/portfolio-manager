@@ -6,7 +6,11 @@ import (
 )
 
 /*
-BASIC CRUD
+	BASIC CRUD
+*/
+
+/*
+	Portfolio
 */
 
 // Returns portfolio ID
@@ -54,12 +58,32 @@ func (s *Storage) DeletePortfolio(portfolioID int) error {
 	return err
 }
 
+func (s *Storage) GetPortfolioIDByName(name string) (int, error) {
+	query := `SELECT id FROM portfolios WHERE name = $1;`
+
+	var portfolioID int
+	err := s.db.QueryRow(query, name).Scan(&portfolioID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil // No rows found
+		}
+		return 0, err
+	}
+
+	return portfolioID, nil
+}
+
+/*
+	Stock
+*/
+
 // Returns stock id
-func (s *Storage) CreateStock(name string, price float64, time string) (int, error) {
-	query := `INSERT INTO stocks (name, price, time) VALUES ($1, $2, $3) RETURNING id;`
+func (s *Storage) CreateStock(name string, price float64) (int, error) {
+	query := `INSERT INTO stocks (name, price) VALUES ($1, $2) RETURNING id;`
 
 	var stockID int
-	err := s.db.QueryRow(query, name, price, time).Scan(&stockID)
+	err := s.db.QueryRow(query, name, price).Scan(&stockID)
 
 	if err != nil {
 		return 0, err
@@ -68,28 +92,27 @@ func (s *Storage) CreateStock(name string, price float64, time string) (int, err
 	return stockID, nil
 }
 
-// Returns stock name, price and time it's created
-func (s *Storage) GetStock(stockID int) (string, float64, string, error) {
-	query := `SELECT name, price, time FROM stocks WHERE id = $1;`
+// Returns stock name, price
+func (s *Storage) GetStock(stockID int) (string, float64, error) {
+	query := `SELECT name, price FROM stocks WHERE id = $1;`
 
 	var name string
 	var price float64
-	var time string
-	err := s.db.QueryRow(query, stockID).Scan(&name, &price, &time)
+	err := s.db.QueryRow(query, stockID).Scan(&name, &price)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", 0, "", nil // No rows found
+			return "", 0, nil // No rows found
 		}
-		return "", 0, "", err
+		return "", 0, err
 	}
 
-	return name, price, time, nil
+	return name, price, nil
 }
 
-func (s *Storage) UpdateStock(stockID int, newPrice float64, newTime string) error {
-	query := `UPDATE stocks SET price = $1, time = $2 WHERE id = $3;`
-	_, err := s.db.Exec(query, newPrice, newTime, stockID)
+func (s *Storage) UpdateStock(stockID int, newPrice float64) error {
+	query := `UPDATE stocks SET price = $1 WHERE id = $2;`
+	_, err := s.db.Exec(query, newPrice, stockID)
 
 	return err
 }
@@ -100,6 +123,25 @@ func (s *Storage) DeleteStock(stockID int) error {
 
 	return err
 }
+
+func (s *Storage) GetStockIDByName(name string) (int, error) {
+	query := `SELECT id FROM stocks WHERE name = $1;`
+	var stockID int
+	err := s.db.QueryRow(query, name).Scan(&stockID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil // No rows found
+		}
+		return 0, err
+	}
+
+	return stockID, nil
+}
+
+/*
+	PortfolioStock
+*/
 
 // Returns PortfolioStockID
 func (s *Storage) CreatePortfolioStock(portfolioID int, stockID int) (int, error) {
@@ -138,6 +180,10 @@ func (s *Storage) DeletePortfolioStock(portfolioStockID int) error {
 
 	return err
 }
+
+/*
+	PortfolioStockRelationship
+*/
 
 // Returns relationship ID
 func (s *Storage) CreatePortfolioStockRelationship(portfolioStockID int, quantity int) (int, error) {
@@ -184,12 +230,65 @@ func (s *Storage) DeletePortfolioStockRelationship(relationshipID int) error {
 	return err
 }
 
+/*
+	Index
+*/
+
+// Returns indexID
+func (s *Storage) CreateIndex(name string) (int, error) {
+	query := `INSERT INTO indexes (name) VALUES ($1) RETURNING id;`
+
+	var indexID int
+	err := s.db.QueryRow(query, name).Scan(&indexID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return indexID, nil
+}
+
+// Returns name of the index
+func (s *Storage) GetIndex(indexID int) (string, error) {
+	query := `SELECT name FROM indexes WHERE id = $1;`
+
+	var name string
+	err := s.db.QueryRow(query, indexID).Scan(&name)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil // No rows found
+		}
+		return "", err
+	}
+
+	return name, nil
+}
+
+func (s *Storage) UpdateIndex(indexID int, newName string) error {
+	query := `UPDATE indexes SET name = $1 WHERE id = $2;`
+	_, err := s.db.Exec(query, newName, indexID)
+
+	return err
+}
+
+func (s *Storage) DeleteIndex(indexID int) error {
+	query := `DELETE FROM indexes WHERE id = $1;`
+	_, err := s.db.Exec(query, indexID)
+
+	return err
+}
+
+/*
+	IndexStock
+*/
+
 // Returns index stock ID
-func (s *Storage) CreateIndexStock(name string, fraction float64, time string) (int, error) {
-	query := `INSERT INTO index_stocks (name_of_stock, fraction, time) VALUES ($1, $2, $3) RETURNING id;`
+func (s *Storage) CreateIndexStock(indexID int, stockID int) (int, error) {
+	query := `INSERT INTO index_stocks (index_id, stock_id) VALUES ($1, $2) RETURNING id;`
 
 	var indexStockID int
-	err := s.db.QueryRow(query, name, fraction, time).Scan(&indexStockID)
+	err := s.db.QueryRow(query, indexID, stockID).Scan(&indexStockID)
 
 	if err != nil {
 		return 0, err
@@ -198,35 +297,134 @@ func (s *Storage) CreateIndexStock(name string, fraction float64, time string) (
 	return indexStockID, nil
 }
 
-// Returns stock name, fraction and time stock has been created
-func (s *Storage) GetIndexStock(indexStockID int) (string, float64, string, error) {
-	query := `SELECT name_of_stock, fraction, time FROM index_stocks WHERE id = $1;`
+// Returns indexID, stockID
+func (s *Storage) GetIndexStock(indexStockID int) (int, int, error) {
 
-	var name string
-	var fraction float64
-	var time string
-	err := s.db.QueryRow(query, indexStockID).Scan(&name, &fraction, &time)
+	query := `SELECT index_id, stock_id FROM index_stocks WHERE id = $1;`
+
+	var indexID, stockID int
+	err := s.db.QueryRow(query, indexStockID).Scan(&indexID, &stockID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", 0, "", nil // No rows found
+			return 0, 0, nil // No rows found
 		}
-		return "", 0, "", err
+		return 0, 0, err
 	}
 
-	return name, fraction, time, nil
-}
-
-func (s *Storage) UpdateIndexStock(indexStockID int, newFraction float64, newTime string) error {
-	query := `UPDATE index_stocks SET fraction = $1, time = $2 WHERE id = $3;`
-	_, err := s.db.Exec(query, newFraction, newTime, indexStockID)
-
-	return err
+	return indexID, stockID, nil
 }
 
 func (s *Storage) DeleteIndexStock(indexStockID int) error {
 	query := `DELETE FROM index_stocks WHERE id = $1;`
 	_, err := s.db.Exec(query, indexStockID)
+
+	return err
+}
+
+/*
+	IndexStockRelationship
+*/
+
+// Returns relationshipID
+func (s *Storage) CreateIndexStockRelationship(indexStockID int, fraction float64) (int, error) {
+	query := `INSERT INTO index_stocks_relationship (index_stocks_id, fraction) VALUES ($1, $2) RETURNING id;`
+
+	var relationshipID int
+	err := s.db.QueryRow(query, indexStockID, fraction).Scan(&relationshipID)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return relationshipID, nil
+}
+
+// Returns indexStockID, fraction
+func (s *Storage) GetIndexStockRelationship(relationshipID int) (int, float64, error) {
+	query := `SELECT index_stocks_id, fraction FROM index_stocks_relationship WHERE id = $1;`
+
+	var indexStockID int
+	var fraction float64
+	err := s.db.QueryRow(query, relationshipID).Scan(&indexStockID, &fraction)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, 0, nil // No rows found
+		}
+		return 0, 0, err
+	}
+
+	return indexStockID, fraction, nil
+}
+
+func (s *Storage) UpdateIndexStockRelationship(relationshipID int, newFraction float64) error {
+	query := `UPDATE index_stocks_relationship SET fraction = $1 WHERE id = $2;`
+	_, err := s.db.Exec(query, newFraction, relationshipID)
+
+	return err
+}
+
+func (s *Storage) DeleteIndexStockRelationship(relationshipID int) error {
+	query := `DELETE FROM index_stocks_relationship WHERE id = $1;`
+	_, err := s.db.Exec(query, relationshipID)
+
+	return err
+}
+
+/*
+	ADDITIONAL FUNCTIONALITY
+*/
+
+func (s *Storage) AddStockToPortfolio(portfolioID, stockID, quantity int) error {
+	portfolioStockID, err := s.CreatePortfolioStock(portfolioID, stockID)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.CreatePortfolioStockRelationship(portfolioStockID, quantity)
+
+	return err
+}
+
+func (s *Storage) AddManyStocksToPortfolio(portfolioID int, stocksQuantityMap map[int]int) error {
+	for stockID, quantity := range stocksQuantityMap {
+		err := s.AddStockToPortfolio(portfolioID, stockID, quantity)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *Storage) convertStocksQuantityMapToStocksIDQuantityMap(stocksQuantityMap map[string]int) (map[int]int, error) {
+	stocksIDQuantityMap := make(map[int]int)
+	for stockName, quantity := range stocksQuantityMap {
+		stockID, err := s.GetStockIDByName(stockName)
+		if err != nil {
+			return nil, err
+		}
+
+		stocksIDQuantityMap[stockID] = quantity
+	}
+
+	return stocksIDQuantityMap, nil
+}
+
+func (s *Storage) AddManyStocksToPortfolioByName(portfolioName string, stocksQuantityMap map[string]int) error {
+	portfolioID, err := s.GetPortfolioIDByName(portfolioName)
+	if err != nil {
+		return err
+	}
+
+	stocksIDQuantityMap := make(map[int]int)
+	stocksIDQuantityMap, err = s.convertStocksQuantityMapToStocksIDQuantityMap(stocksQuantityMap)
+	if err != nil {
+		return err
+	}
+
+	err = s.AddManyStocksToPortfolio(portfolioID, stocksIDQuantityMap)
 
 	return err
 }
