@@ -29,8 +29,13 @@ type Index struct {
 }
 
 type IndexStock struct {
-	Id          int // PK
-	IndexId     int // FK
-	NameOfStock string
-	fraction    float64
+	Id      int // PK
+	IndexId int // FK
+	StockId int // FK
+}
+
+type IndexStockRelationship struct {
+	Id           int // PK
+	IndexStockId int // FK
+	fraction     float64
 }
