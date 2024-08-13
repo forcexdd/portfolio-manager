@@ -1,7 +1,5 @@
 package models
 
-import "time"
-
 type Portfolio struct {
 	Id   int // PK
 	Name string
@@ -11,7 +9,6 @@ type Stock struct {
 	Id    int // PK
 	Name  string
 	Price float64
-	Time  time.Time
 }
 
 type PortfolioStock struct {
@@ -26,9 +23,14 @@ type PortfolioStockRelationship struct {
 	Quantity         int
 }
 
+type Index struct {
+	Id   int // PK
+	Name string
+}
+
 type IndexStock struct {
 	Id          int // PK
+	IndexId     int // FK
 	NameOfStock string
 	fraction    float64
-	Time        time.Time
 }
