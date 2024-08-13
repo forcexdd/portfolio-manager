@@ -1,3 +1,7 @@
 .row {
     margin-top: 20px;
 }
+
+#selectStocks {
+    width: 5rem;
+}

@@ -116,13 +116,6 @@ func HandleManager(w http.ResponseWriter, r *http.Request) {
 		{"GAZP", 130, 21363.00},
 	}
 
-	pieChart, err := services.GetStockPieChart(stocks)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
-	data := getData()
-	data["PieChart"] = base64.StdEncoding.EncodeToString(pieChart)
 
 	cookie, err := r.Cookie("current_portfolio")
 	if (err != nil) && (!errors.Is(err, http.ErrNoCookie)) {
@@ -130,10 +123,19 @@ func HandleManager(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	data := getData()
+
 	if cookie == nil || cookie.Value == "" || errors.Is(err, http.ErrNoCookie) {
 		handleNoPortfolioChosen(w, r, data)
 		return
 	}
+
+	pieChart, err := services.GetStockPieChart(stocks)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	data["PieChart"] = base64.StdEncoding.EncodeToString(pieChart)
 
 	files := []string{
 		"./src/web/frontend/templates/manager.page.tmpl",

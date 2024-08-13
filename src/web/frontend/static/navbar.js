@@ -2,10 +2,10 @@ let optionsHTML = document.getElementById("options");
 
 chooseRightSection(optionsHTML);
 
-optionsHTML.addEventListener("change", (e) => {
+optionsHTML.onchange = (e) => {
     let domain = document.location.origin;
     window.location.href = domain + '/' + optionsHTML.value
-})
+};
 
 function chooseRightSection(optionsHTML) {
     function getFirstEndpoint()
@@ -39,10 +39,10 @@ let portfolioSelectionHTML = document.getElementById("portfolios");
 
 chooseRightPortfolio(portfolioSelectionHTML);
 
-portfolioSelectionHTML.addEventListener("change", (e) => {
+portfolioSelectionHTML.onchange = (e) => {
     document.cookie = `current_portfolio=${portfolioSelectionHTML.value}`;
     location.reload();
-})
+};
 
 function getCookie(cname) {
     let name = cname + "=";

@@ -1,18 +1,24 @@
 {{define "navbar"}}
-    <div>
-        <select aria-label="options" id="options">
-            <option value="following_index">Following Index</option>
-            <option value="manager">Manager</option>
-        </select>
-        <select aria-label="portfolios" id="portfolios">
-            <option value="select" disabled="disabled" selected>--SELECT--</option>
-            {{ range $portfolio := .portfolios }}
-            <option value={{$portfolio.Name}}> {{ $portfolio.Name }} </option>
-            {{ end }}
-        </select>
-        <a href="/add_portfolio">
-            <button type="button">Add Portfolio</button>
-        </a>
-    </div>
-    <script src="../static/navbar.js"></script>
+<div>
+    <link rel="stylesheet" href="../static/navbar.css">
+    <select aria-label="options" id="options">
+        <option value="following_index">Following Index</option>
+        <option value="manager">Manager</option>
+    </select>
+    <select aria-label="portfolios" id="portfolios">
+        <option value="select" disabled="disabled" selected>select portfolio...</option>
+        {{ range $portfolio := .portfolios }}
+        <option value={{$portfolio.Name}}> {{ $portfolio.Name }} </option>
+        {{ end }}
+    </select>
+    <a href="/add_portfolio">
+        <button type="button">Add Portfolio</button>
+    </a>
+</div>
+<script src="../static/navbar.js"></script>
+<script>
+    $(document).ready(function () {
+        $("#portfolios").select2();
+    })
+</script>
 {{end}}

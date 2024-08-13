@@ -22,10 +22,9 @@ function renderStocks(stocks) {
         removeButton.type = "button";
         removeButton.innerText = "Remove";
         removeButton.onclick = (e) => {
-            stocks = stocks.filter((element) => element.name !== name);
+            let array = getStocks().filter((element) => element.name !== name);
             chosenListTableTbodyHTML.querySelector(`[id='${name}']`).remove();
-            updateStocks(stocks);
-            renderStocks(stocks);
+            updateStocks(array);
         }
 
         let thName = document.createElement("th");
@@ -52,7 +51,11 @@ function updateStocks(array) {
     chosenStocks = array;
 }
 
-addStockButtonHTML.addEventListener("click", (_) => {
+function getStocks() {
+    return chosenStocks;
+}
+
+addStockButtonHTML.onclick = (e) => {
     if (stockNameInputHTML.value === "--SELECT--")
         return;
 
@@ -72,4 +75,42 @@ addStockButtonHTML.addEventListener("click", (_) => {
         chosenStocks.push(obj);
 
     renderStocks(chosenStocks);
-})
+};
+
+let submitButtonHTML = document.getElementById("submitButton");
+let portfolioNameHTML = document.getElementById("portfolioNameInput");
+
+function validPortfolioName(string) {
+    return string.length > 0;
+}
+
+submitButtonHTML.onclick = async (e) => {
+    e.preventDefault();
+    console.log(portfolioNameHTML.value);
+    if (!validPortfolioName(portfolioNameHTML.value)) {
+        alert("invalid name");
+        return;
+    }
+
+    let stocks = getStocks();
+    if (stocks.length === 0) {
+        alert("invalid stocks");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("portfolioName", portfolioNameHTML.value);
+    stocks.forEach((obj) => {
+        formData.append(obj.name, obj.quantity);
+    })
+
+    try {
+        const response = await fetch("/add_portfolio", {
+            method: "POST",
+            body: formData,
+        })
+    } catch (e) {
+        console.error(e);
+    }
+};
