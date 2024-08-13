@@ -7,7 +7,10 @@ import (
 )
 
 type Storage struct {
-	db *sql.DB
+	db          *sql.DB
+	connStr     string
+	allTables   map[string]string
+	tablesOrder []string
 }
 
 func CreateNewStorage(connString string) (*Storage, error) {
@@ -16,7 +19,7 @@ func CreateNewStorage(connString string) (*Storage, error) {
 		return nil, err
 	}
 
-	storage := &Storage{db: db}
+	storage := &Storage{db: db, connStr: connString, allTables: getAllTables(), tablesOrder: getTablesOrder()}
 
 	// defer closing db connection with error handling
 	defer func() {
@@ -39,28 +42,27 @@ func CreateNewStorage(connString string) (*Storage, error) {
 	return storage, err
 }
 
-func DeleteStorage(connString string) error {
-	db, err := sql.Open("postgres", connString)
+func (s *Storage) DeleteStorage() error {
+	var err error
+	s.db, err = sql.Open("postgres", s.connStr)
 	if err != nil {
 		return err
 	}
 
-	storageToDelete := &Storage{db: db}
-
 	// defer closing db connection with error handling
 	defer func() {
-		closeErr := storageToDelete.db.Close()
+		closeErr := s.db.Close()
 		if closeErr != nil && err == nil {
 			err = closeErr
 		}
 	}()
 
-	err = db.Ping()
+	err = s.db.Ping()
 	if err != nil {
 		return err
 	}
 
-	err = storageToDelete.dropAllTables()
+	err = s.dropAllTables()
 	if err != nil {
 		return err
 	}
@@ -73,8 +75,7 @@ func getAllTables() map[string]string {
 		"portfolios": `
 		CREATE TABLE IF NOT EXISTS portfolios (
 			id SERIAL PRIMARY KEY,
-			name VARCHAR(64) NOT NULL UNIQUE,
-			FOREIGN KEY (user_id) REFERENCES users(id)
+			name VARCHAR(64) NOT NULL UNIQUE
 		);`,
 		"stocks": `
 		CREATE TABLE IF NOT EXISTS stocks (
@@ -105,21 +106,28 @@ func getAllTables() map[string]string {
 		"index_stocks": `
 		CREATE TABLE IF NOT EXISTS index_stocks (
 			id SERIAL PRIMARY KEY,
-			name_of_stock VARCHAR(4) NOT NULL UNIQUE,
+			index_id INT NOT NULL,
+			stock_id INT NOT NULL,
+			FOREIGN KEY (index_id) REFERENCES indexes(id),
+			FOREIGN KEY (stock_id) REFERENCES stocks(id)
+		);`,
+		"index_stocks_relationship": `
+		CREATE TABLE IF NOT EXISTS index_stocks_relationship (
+			id SERIAL PRIMARY KEY,
 			fraction DECIMAL(17, 15) NOT NULL,
-		    indexes_id INT NOT NULL,
-		    FOREIGN KEY (indexes_id) REFERENCES indexes(id)
+			index_stocks_id INT NOT NULL,
+			FOREIGN KEY (index_stocks_id) REFERENCES index_stocks(id)
 		);`,
 	}
 }
 
 // Returns an order in which tables must be created
 func getTablesOrder() []string {
-	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "indexes", "index_stocks"}
+	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "indexes", "index_stocks", "index_stocks_relationship"}
 }
 
 func (s *Storage) dropAllTables() error {
-	for _, table := range getTablesOrder() {
+	for _, table := range s.tablesOrder {
 		err := s.DropTable(table)
 		if err != nil {
 			return err
@@ -130,7 +138,7 @@ func (s *Storage) dropAllTables() error {
 }
 
 func (s *Storage) addAllTables() error {
-	for _, table := range getTablesOrder() {
+	for _, table := range s.tablesOrder {
 		err := s.CreateTable(table)
 		if err != nil {
 			return err
@@ -141,7 +149,7 @@ func (s *Storage) addAllTables() error {
 }
 
 func (s *Storage) DropTable(tableName string) error {
-	_, isTable := getAllTables()[tableName]
+	_, isTable := s.allTables[tableName]
 	if !isTable {
 		return errors.New("table not found")
 	}
@@ -153,7 +161,7 @@ func (s *Storage) DropTable(tableName string) error {
 }
 
 func (s *Storage) CreateTable(tableName string) error {
-	query, isTable := getAllTables()[tableName]
+	query, isTable := s.allTables[tableName]
 	if !isTable {
 		return errors.New("table not found")
 	}
