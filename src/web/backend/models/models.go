@@ -37,5 +37,5 @@ type IndexStock struct {
 type IndexStockRelationship struct {
 	Id           int // PK
 	IndexStockId int // FK
-	fraction     float64
+	Fraction     float64
 }
