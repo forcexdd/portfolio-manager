@@ -73,15 +73,14 @@ func getAllTables() map[string]string {
 		"portfolios": `
 		CREATE TABLE IF NOT EXISTS portfolios (
 			id SERIAL PRIMARY KEY,
-			name VARCHAR(64) NOT NULL,
+			name VARCHAR(64) NOT NULL UNIQUE,
 			FOREIGN KEY (user_id) REFERENCES users(id)
 		);`,
 		"stocks": `
 		CREATE TABLE IF NOT EXISTS stocks (
 			id SERIAL PRIMARY KEY,
-			name VARCHAR(4) NOT NULL,
-			price DECIMAL(20, 10) NOT NULL,
-			time TIMESTAMP
+			name VARCHAR(4) NOT NULL UNIQUE,
+			price DECIMAL(32, 15) NOT NULL
 		);`,
 		"portfolio_stocks": `
 		CREATE TABLE IF NOT EXISTS portfolio_stocks (
@@ -98,19 +97,25 @@ func getAllTables() map[string]string {
 			portfolio_stocks_id INT NOT NULL,
 			FOREIGN KEY (portfolio_stocks_id) REFERENCES portfolio_stocks(id)
 		);`,
+		"indexes": `
+		CREATE TABLE IF NOT EXISTS indexes (
+			id SERIAL PRIMARY KEY,
+			name VARCHAR(64) NOT NULL UNIQUE
+		);`,
 		"index_stocks": `
 		CREATE TABLE IF NOT EXISTS index_stocks (
 			id SERIAL PRIMARY KEY,
-			name_of_stock VARCHAR(4) NOT NULL,
-			fraction DECIMAL(12, 10) NOT NULL,
-			time TIMESTAMP
+			name_of_stock VARCHAR(4) NOT NULL UNIQUE,
+			fraction DECIMAL(17, 15) NOT NULL,
+		    indexes_id INT NOT NULL,
+		    FOREIGN KEY (indexes_id) REFERENCES indexes(id)
 		);`,
 	}
 }
 
 // Returns an order in which tables must be created
 func getTablesOrder() []string {
-	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "index_stocks"}
+	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "indexes", "index_stocks"}
 }
 
 func (s *Storage) dropAllTables() error {
