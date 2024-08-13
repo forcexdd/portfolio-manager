@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
 	_ "github.com/lib/pq"
 )
@@ -35,7 +36,7 @@ func (s *Storage) GetPortfolio(portfolioID int) (*models.Portfolio, error) {
 	var portfolio models.Portfolio
 	err := s.db.QueryRow(query, portfolioID).Scan(&portfolio.Id, &portfolio.Name)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -65,7 +66,7 @@ func (s *Storage) GetPortfolioIDByName(name string) (int, error) {
 	err := s.db.QueryRow(query, name).Scan(&portfolioID)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
 		}
 		return 0, err
@@ -100,8 +101,8 @@ func (s *Storage) GetStock(stockID int) (*models.Stock, error) {
 	var stock models.Stock
 	err := s.db.QueryRow(query, stockID).Scan(&stock.Id, &stock.Name, &stock.Price)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -129,8 +130,8 @@ func (s *Storage) GetStockIDByName(name string) (int, error) {
 	err := s.db.QueryRow(query, name).Scan(&stockID)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return 0, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
 		}
 		return 0, err
 	}
@@ -165,7 +166,7 @@ func (s *Storage) GetPortfolioStock(portfolioStockID int) (*models.PortfolioStoc
 	var portfolioStock models.PortfolioStock
 	err := s.db.QueryRow(query, portfolioStockID).Scan(&portfolioStock.Id, &portfolioStock.PortfolioId, &portfolioStock.StockId)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -207,8 +208,8 @@ func (s *Storage) GetPortfolioStockRelationship(relationshipID int) (*models.Por
 	var relationship models.PortfolioStockRelationship
 	err := s.db.QueryRow(query, relationshipID).Scan(&relationship.Id, &relationship.PortfolioStockId, &relationship.Quantity)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -255,8 +256,8 @@ func (s *Storage) GetIndex(indexID int) (*models.Index, error) {
 	var index models.Index
 	err := s.db.QueryRow(query, indexID).Scan(&index.Id, &index.Name)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -304,8 +305,8 @@ func (s *Storage) GetIndexStock(indexStockID int) (*models.IndexStock, error) {
 	var indexStock models.IndexStock
 	err := s.db.QueryRow(query, indexStockID).Scan(&indexStock.Id, &indexStock.IndexId, &indexStock.StockId)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -346,8 +347,8 @@ func (s *Storage) GetIndexStockRelationship(relationshipID int) (*models.IndexSt
 	var relationship models.IndexStockRelationship
 	err := s.db.QueryRow(query, relationshipID).Scan(&relationship.Id, &relationship.IndexStockId, &relationship.Fraction)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No rows found
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
 		}
 		return nil, err
 	}
@@ -422,6 +423,69 @@ func (s *Storage) AddManyStocksToPortfolioByName(portfolioName string, stocksQua
 	}
 
 	err = s.AddManyStocksToPortfolio(portfolioID, stocksIDQuantityMap)
+
+	return err
+}
+
+func (s *Storage) GetAllPortfolios() ([]*models.Portfolio, error) {
+	query := `SELECT id, name FROM portfolios;`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		closeErr := rows.Close()
+		if closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+
+	var portfolios []*models.Portfolio
+	var portfolio models.Portfolio
+	for rows.Next() {
+		err = rows.Scan(&portfolio.Id, &portfolio.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		portfolios = append(portfolios, &portfolio)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return portfolios, nil
+}
+
+func (s *Storage) DeleteAllStocksFromPortfolio(portfolioID int) error {
+	query := `
+        DELETE FROM portfolio_stocks_relationship
+        WHERE portfolio_stocks_id IN (
+            SELECT id FROM portfolio_stocks WHERE portfolio_id = $1
+        );
+    `
+	_, err := s.db.Exec(query, portfolioID)
+	if err != nil {
+		return err
+	}
+
+	query = `DELETE FROM portfolio_stocks WHERE portfolio_id = $1;`
+	_, err = s.db.Exec(query, portfolioID)
+
+	return err
+}
+
+func (s *Storage) DeleteAllStocksFromPortfolioByName(portfolioName string) error {
+	portfolioID, err := s.GetPortfolioIDByName(portfolioName)
+	if err != nil {
+		return err
+	}
+
+	err = s.DeleteAllStocksFromPortfolio(portfolioID)
 
 	return err
 }
