@@ -1,4 +1,4 @@
-package database
+package storage
 
 import (
 	"database/sql"
@@ -13,13 +13,18 @@ type Storage struct {
 	tablesOrder []string
 }
 
-func CreateNewStorage(connString string) (*Storage, error) {
+func NewStorage(connString string) (*Storage, error) {
 	db, err := sql.Open("postgres", connString)
 	if err != nil {
 		return nil, err
 	}
 
-	storage := &Storage{db: db, connStr: connString, allTables: getAllTables(), tablesOrder: getTablesOrder()}
+	storage := &Storage{
+		db:          db,
+		connStr:     connString,
+		allTables:   getAllTables(),
+		tablesOrder: getTablesOrder(),
+	}
 
 	// defer closing db connection with error handling
 	defer func() {

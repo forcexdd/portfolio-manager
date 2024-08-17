@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
 	"log"
 )
 
 func main() {
 	const connString = "postgresql://postgres:postgres@localhost:5432/StockPortfolioManager?sslmode=disable"
 
-	_, err := database.CreateNewStorage(connString)
+	_, err := storage.NewStorage(connString)
 	if err != nil {
 		log.Fatal(err)
 	}
