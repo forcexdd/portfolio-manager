@@ -7,7 +7,7 @@ import (
 )
 
 type Storage struct {
-	db          *sql.DB
+	Db          *sql.DB
 	connStr     string
 	allTables   map[string]string
 	tablesOrder []string
@@ -20,21 +20,13 @@ func NewStorage(connString string) (*Storage, error) {
 	}
 
 	storage := &Storage{
-		db:          db,
+		Db:          db,
 		connStr:     connString,
 		allTables:   getAllTables(),
 		tablesOrder: getTablesOrder(),
 	}
 
-	// defer closing db connection with error handling
-	defer func() {
-		closeErr := storage.db.Close()
-		if closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
-
-	err = storage.db.Ping()
+	err = storage.Db.Ping()
 	if err != nil {
 		return nil, err
 	}
@@ -49,20 +41,16 @@ func NewStorage(connString string) (*Storage, error) {
 
 func (s *Storage) DeleteStorage() error {
 	var err error
-	s.db, err = sql.Open("postgres", s.connStr)
-	if err != nil {
-		return err
-	}
 
 	// defer closing db connection with error handling
 	defer func() {
-		closeErr := s.db.Close()
+		closeErr := s.Db.Close()
 		if closeErr != nil && err == nil {
 			err = closeErr
 		}
 	}()
 
-	err = s.db.Ping()
+	err = s.Db.Ping()
 	if err != nil {
 		return err
 	}
@@ -160,7 +148,7 @@ func (s *Storage) DropTable(tableName string) error {
 	}
 
 	query := "DROP TABLE IF EXISTS " + tableName + " CASCADE;"
-	_, err := s.db.Exec(query)
+	_, err := s.Db.Exec(query)
 
 	return err
 }
@@ -171,7 +159,7 @@ func (s *Storage) CreateTable(tableName string) error {
 		return errors.New("table not found")
 	}
 
-	_, err := s.db.Exec(query)
+	_, err := s.Db.Exec(query)
 
 	return err
 }
