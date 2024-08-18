@@ -2,7 +2,10 @@ module github.com/forcexdd/StockPortfolioManager
 
 go 1.22.5
 
+
+
 require (
+	github.com/lib/pq v1.10.9 // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/vicanso/go-charts v1.2.2 // indirect
