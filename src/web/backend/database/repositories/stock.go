@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"errors"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/dto_models"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
 )
@@ -53,6 +54,15 @@ func (p *PostgresStockRepository) Update(stock *models.Stock) error {
 		return err
 	}
 
+	var dtoStock *dto_models.Stock
+	dtoStock, err = getStock(p.db, stockId)
+	if err != nil {
+		return err
+	}
+	if dtoStock.Name != stock.Name {
+		return errors.New("stock name does not match")
+	}
+
 	err = updateStock(p.db, stockId, stock.Price)
 
 	return err
@@ -60,6 +70,11 @@ func (p *PostgresStockRepository) Update(stock *models.Stock) error {
 
 func (p *PostgresStockRepository) Delete(stock *models.Stock) error {
 	stockId, err := getStockIdByName(p.db, stock.Name)
+	if err != nil {
+		return err
+	}
+
+	err = deleteStockFromConnectedTables(p.db, stockId)
 	if err != nil {
 		return err
 	}

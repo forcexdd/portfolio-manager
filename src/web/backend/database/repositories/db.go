@@ -203,6 +203,41 @@ func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 	return stocks, nil
 }
 
+func deleteStockFromConnectedTables(db *sql.DB, stockId int) error {
+	query := `
+        DELETE FROM portfolio_stocks_relationship
+        WHERE portfolio_stocks_id IN (
+            SELECT id FROM portfolio_stocks WHERE stock_id = $1
+        );
+    `
+	_, err := db.Exec(query, stockId)
+	if err != nil {
+		return err
+	}
+
+	query = `DELETE FROM portfolio_stocks WHERE stock_id = $1;`
+	_, err = db.Exec(query, stockId)
+	if err != nil {
+		return err
+	}
+
+	query = `
+        DELETE FROM index_stocks_relationship
+        WHERE index_stocks_id IN (
+            SELECT id FROM index_stocks WHERE stock_id = $1
+        );
+    `
+	_, err = db.Exec(query, stockId)
+	if err != nil {
+		return err
+	}
+
+	query = `DELETE FROM index_stocks WHERE stock_id = $1;`
+	_, err = db.Exec(query, stockId)
+
+	return err
+}
+
 /*
 	PortfolioStock
 */
