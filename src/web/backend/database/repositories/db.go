@@ -60,7 +60,6 @@ func getPortfolioIdByName(db *sql.DB, name string) (int, error) {
 
 	var portfolioId int
 	err := db.QueryRow(query, name).Scan(&portfolioId)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
@@ -73,7 +72,6 @@ func getPortfolioIdByName(db *sql.DB, name string) (int, error) {
 
 func getAllPortfolios(db *sql.DB) ([]*dto_models.Portfolio, error) {
 	query := `SELECT id, name FROM portfolios;`
-
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -94,7 +92,12 @@ func getAllPortfolios(db *sql.DB) ([]*dto_models.Portfolio, error) {
 			return nil, err
 		}
 
-		portfolios = append(portfolios, &dto_models.Portfolio{Id: portfolio.Id, Name: portfolio.Name})
+		newPortfolio := &dto_models.Portfolio{
+			Id:   portfolio.Id,
+			Name: portfolio.Name,
+		}
+
+		portfolios = append(portfolios, newPortfolio)
 	}
 
 	err = rows.Err()
@@ -156,9 +159,9 @@ func deleteStock(db *sql.DB, stockId int) error {
 
 func getStockIdByName(db *sql.DB, name string) (int, error) {
 	query := `SELECT id FROM stocks WHERE name = $1;`
+
 	var stockId int
 	err := db.QueryRow(query, name).Scan(&stockId)
-
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
@@ -171,7 +174,6 @@ func getStockIdByName(db *sql.DB, name string) (int, error) {
 
 func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 	query := `SELECT id, name, price FROM stocks;`
-
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -192,7 +194,13 @@ func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 			return nil, err
 		}
 
-		stocks = append(stocks, &dto_models.Stock{Id: stock.Id, Name: stock.Name, Price: stock.Price})
+		newStock := &dto_models.Stock{
+			Id:    stock.Id,
+			Name:  stock.Name,
+			Price: stock.Price,
+		}
+
+		stocks = append(stocks, newStock)
 	}
 
 	err = rows.Err()
@@ -275,7 +283,6 @@ func getPortfolioStock(db *sql.DB, portfolioStockId int) (*dto_models.PortfolioS
 
 func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_models.PortfolioStock, error) {
 	query := `SELECT id, portfolio_id, stock_id FROM portfolio_stocks WHERE portfolio_id = $1;`
-
 	rows, err := db.Query(query, portfolioId)
 	if err != nil {
 		return nil, err
@@ -296,7 +303,13 @@ func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_mod
 			return nil, err
 		}
 
-		portfolioStocks = append(portfolioStocks, &dto_models.PortfolioStock{Id: portfolioStock.Id, PortfolioId: portfolioStock.PortfolioId, StockId: portfolioStock.StockId})
+		newPortfolioStocks := &dto_models.PortfolioStock{
+			Id:          portfolioStock.Id,
+			PortfolioId: portfolioStock.PortfolioId,
+			StockId:     portfolioStock.StockId,
+		}
+
+		portfolioStocks = append(portfolioStocks, newPortfolioStocks)
 	}
 
 	err = rows.Err()
@@ -309,7 +322,6 @@ func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_mod
 
 func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.PortfolioStock, error) {
 	query := `SELECT id, portfolio_id, stock_id FROM portfolio_stocks WHERE stock_id = $1;`
-
 	rows, err := db.Query(query, stockId)
 	if err != nil {
 		return nil, err
@@ -330,7 +342,13 @@ func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.Por
 			return nil, err
 		}
 
-		portfolioStocks = append(portfolioStocks, &dto_models.PortfolioStock{Id: portfolioStock.Id, PortfolioId: portfolioStock.PortfolioId, StockId: portfolioStock.StockId})
+		newPortfolioStocks := &dto_models.PortfolioStock{
+			Id:          portfolioStock.Id,
+			PortfolioId: portfolioStock.PortfolioId,
+			StockId:     portfolioStock.StockId,
+		}
+
+		portfolioStocks = append(portfolioStocks, newPortfolioStocks)
 	}
 
 	err = rows.Err()
@@ -476,43 +494,8 @@ func getIndexIdByName(db *sql.DB, name string) (int, error) {
 	return indexId, nil
 }
 
-func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexStock, error) {
-	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE portfolio_id = $1;`
-
-	rows, err := db.Query(query, indexId)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		closeErr := rows.Close()
-		if closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
-
-	var indexStocks []*dto_models.IndexStock
-	var indexStock dto_models.IndexStock
-	for rows.Next() {
-		err = rows.Scan(&indexStock.Id, &indexStock.IndexId, &indexStock.StockId)
-		if err != nil {
-			return nil, err
-		}
-
-		indexStocks = append(indexStocks, &dto_models.IndexStock{Id: indexStock.Id, IndexId: indexStock.IndexId, StockId: indexStock.StockId})
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return indexStocks, nil
-}
-
 func getAllIndexes(db *sql.DB) ([]*dto_models.Index, error) {
 	query := `SELECT id, name FROM indexes;`
-
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -533,7 +516,12 @@ func getAllIndexes(db *sql.DB) ([]*dto_models.Index, error) {
 			return nil, err
 		}
 
-		indexes = append(indexes, &dto_models.Index{Id: index.Id, Name: index.Name})
+		newIndex := &dto_models.Index{
+			Id:   index.Id,
+			Name: index.Name,
+		}
+
+		indexes = append(indexes, newIndex)
 	}
 
 	err = rows.Err()
@@ -584,6 +572,45 @@ func deleteIndexStock(db *sql.DB, indexStockId int) error {
 	_, err := db.Exec(query, indexStockId)
 
 	return err
+}
+
+func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexStock, error) {
+	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE portfolio_id = $1;`
+	rows, err := db.Query(query, indexId)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		closeErr := rows.Close()
+		if closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
+
+	var indexStocks []*dto_models.IndexStock
+	var indexStock dto_models.IndexStock
+	for rows.Next() {
+		err = rows.Scan(&indexStock.Id, &indexStock.IndexId, &indexStock.StockId)
+		if err != nil {
+			return nil, err
+		}
+
+		newIndexStocks := &dto_models.IndexStock{
+			Id:      indexStock.Id,
+			IndexId: indexStock.IndexId,
+			StockId: indexStock.StockId,
+		}
+
+		indexStocks = append(indexStocks, newIndexStocks)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	return indexStocks, nil
 }
 
 /*
