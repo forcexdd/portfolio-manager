@@ -25,7 +25,16 @@ func NewIndexRepository(db *sql.DB) IndexRepository {
 }
 
 func (p *PostgresIndexRepository) Create(index *models.Index) error {
-	createdPortfolio, err := createIndex(p.db, index.Name)
+	indexId, err := getIndexIdByName(p.db, index.Name)
+	if err != nil {
+		return err
+	}
+	if indexId != 0 {
+		return errors.New("index already exists")
+	}
+
+	var createdIndex *dto_models.Index
+	createdIndex, err = createIndex(p.db, index.Name)
 	if err != nil {
 		return err
 	}
@@ -35,8 +44,11 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 
 	stocksIdQuantityMap := make(map[int]float64)
 	stocksIdQuantityMap, err = convertStocksFractionMapToStocksIdFractionMap(p.db, index.StocksFractionMap)
+	if err != nil {
+		return err
+	}
 
-	err = addManyStocksToIndex(p.db, createdPortfolio.Id, stocksIdQuantityMap)
+	err = addManyStocksToIndex(p.db, createdIndex.Id, stocksIdQuantityMap)
 
 	return err
 }
@@ -47,7 +59,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, err
 	}
 	if indexId == 0 {
-		return nil, nil
+		return nil, errors.New("index not found")
 	}
 
 	var indexStocks []*dto_models.IndexStock
@@ -152,7 +164,12 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 			return nil, err
 		}
 
-		indexes = append(indexes, index)
+		newIndex := &models.Index{
+			Name:              index.Name,
+			StocksFractionMap: index.StocksFractionMap,
+		}
+
+		indexes = append(indexes, newIndex)
 	}
 
 	return indexes, nil

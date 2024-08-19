@@ -25,7 +25,15 @@ func NewStockRepository(db *sql.DB) StockRepository {
 }
 
 func (p *PostgresStockRepository) Create(stock *models.Stock) error {
-	_, err := createStock(p.db, stock.Name, stock.Price)
+	stockId, err := getStockIdByName(p.db, stock.Name)
+	if err != nil {
+		return err
+	}
+	if stockId != 0 {
+		return errors.New("stock already exists")
+	}
+
+	_, err = createStock(p.db, stock.Name, stock.Price)
 
 	return err
 }
@@ -34,6 +42,9 @@ func (p *PostgresStockRepository) GetByName(name string) (*models.Stock, error) 
 	stockId, err := getStockIdByName(p.db, name)
 	if err != nil {
 		return nil, err
+	}
+	if stockId == 0 {
+		return nil, errors.New("stock not found")
 	}
 
 	var dtoStock *dto_models.Stock
@@ -52,6 +63,9 @@ func (p *PostgresStockRepository) Update(stock *models.Stock) error {
 	stockId, err := getStockIdByName(p.db, stock.Name)
 	if err != nil {
 		return err
+	}
+	if stockId == 0 {
+		return errors.New("stock not found")
 	}
 
 	var dtoStock *dto_models.Stock
@@ -72,6 +86,9 @@ func (p *PostgresStockRepository) Delete(stock *models.Stock) error {
 	stockId, err := getStockIdByName(p.db, stock.Name)
 	if err != nil {
 		return err
+	}
+	if stockId == 0 {
+		return errors.New("stock not found")
 	}
 
 	err = deleteStockFromConnectedTables(p.db, stockId)
@@ -95,12 +112,17 @@ func (p *PostgresStockRepository) GetAll() ([]*models.Stock, error) {
 	}
 
 	var stocks []*models.Stock
-	var stock *models.Stock
+	var stock models.Stock
 	for _, dtoStock := range dtoStocks {
 		stock.Name = dtoStock.Name
 		stock.Price = dtoStock.Price
 
-		stocks = append(stocks, stock)
+		newStock := &models.Stock{
+			Name:  stock.Name,
+			Price: stock.Price,
+		}
+
+		stocks = append(stocks, newStock)
 	}
 
 	return stocks, nil

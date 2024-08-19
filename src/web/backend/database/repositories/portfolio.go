@@ -25,6 +25,14 @@ func NewPortfolioRepository(db *sql.DB) PortfolioRepository {
 }
 
 func (p *PostgresPortfolioRepository) Create(portfolio *models.Portfolio) error {
+	portfolioId, err := getPortfolioIdByName(p.db, portfolio.Name)
+	if err != nil {
+		return err
+	}
+	if portfolioId != 0 {
+		return errors.New("portfolio already exists")
+	}
+
 	createdPortfolio, err := createPortfolio(p.db, portfolio.Name)
 	if err != nil {
 		return err
@@ -35,6 +43,9 @@ func (p *PostgresPortfolioRepository) Create(portfolio *models.Portfolio) error 
 
 	stocksIdQuantityMap := make(map[int]int)
 	stocksIdQuantityMap, err = convertStocksQuantityMapToStocksIdQuantityMap(p.db, portfolio.StocksQuantityMap)
+	if err != nil {
+		return err
+	}
 
 	err = addManyStocksToPortfolio(p.db, createdPortfolio.Id, stocksIdQuantityMap)
 
@@ -47,7 +58,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 		return nil, err
 	}
 	if portfolioId == 0 {
-		return nil, nil
+		return nil, errors.New("portfolio not found")
 	}
 
 	var portfolioStocks []*dto_models.PortfolioStock
@@ -152,7 +163,12 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*models.Portfolio, error) {
 			return nil, err
 		}
 
-		portfolios = append(portfolios, portfolio)
+		newPortfolio := &models.Portfolio{
+			Name:              portfolio.Name,
+			StocksQuantityMap: portfolio.StocksQuantityMap,
+		}
+
+		portfolios = append(portfolios, newPortfolio)
 	}
 
 	return portfolios, nil
