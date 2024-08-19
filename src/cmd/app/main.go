@@ -1,9 +1,7 @@
 package main
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
 	"log"
 )
 
@@ -15,17 +13,25 @@ func main() {
 		log.Fatal(err)
 	}
 
-	stockRepository := repositories.NewStockRepository(db.GetDb())
-	portfolioRepository := repositories.NewPortfolioRepository(db.GetDb())
+	//stockRepository := repositories.NewStockRepository(db.GetDb())
+	//portfolioRepository := repositories.NewPortfolioRepository(db.GetDb())
+	//
+	//stockAFLT := &models.Stock{Name: "AFLT", Price: 123.4567}
+	//stockGAZP := &models.Stock{Name: "GAZP", Price: 456}
+	//stockALRS := &models.Stock{Name: "ALRS", Price: 45.12}
+	//newMap := map[*models.Stock]int{
+	//	stockAFLT: 1,
+	//	stockGAZP: 34,
+	//	stockALRS: 9,
+	//}
+	//
+	//newPortfolio := &models.Portfolio{Name: "Aboba", StocksQuantityMap: newMap}
+	//
+	//stockRepository.Create(stockAFLT)
+	//stockRepository.Create(stockGAZP)
+	//stockRepository.Create(stockALRS)
+	//
+	//portfolioRepository.Create(newPortfolio)
 
-	stock := &models.Stock{Name: "AFLT", Price: 123.4567}
-	stockRepository.Delete(stock)
-
-	//newStock, err := stockRepository.GetByName("AFLT")
-	newMap := map[*models.Stock]int{
-		stock: 3,
-	}
-
-	portfolioRepository.Delete(&models.Portfolio{Name: "Aboba portfel", StocksQuantityMap: newMap})
 	db.CloseConnection()
 }
