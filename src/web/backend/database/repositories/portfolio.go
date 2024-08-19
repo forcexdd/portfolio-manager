@@ -29,7 +29,7 @@ func (p *PostgresPortfolioRepository) Create(portfolio *models.Portfolio) error 
 	if err != nil {
 		return err
 	}
-	if portfolioId == 0 {
+	if portfolioId != 0 {
 		return errors.New("portfolio already exists")
 	}
 

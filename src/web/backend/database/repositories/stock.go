@@ -29,7 +29,7 @@ func (p *PostgresStockRepository) Create(stock *models.Stock) error {
 	if err != nil {
 		return err
 	}
-	if stockId == 0 {
+	if stockId != 0 {
 		return errors.New("stock already exists")
 	}
 

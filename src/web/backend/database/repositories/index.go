@@ -29,7 +29,7 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 	if err != nil {
 		return err
 	}
-	if indexId == 0 {
+	if indexId != 0 {
 		return errors.New("index already exists")
 	}
 
