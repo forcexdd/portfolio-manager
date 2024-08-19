@@ -152,7 +152,12 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*models.Portfolio, error) {
 			return nil, err
 		}
 
-		portfolios = append(portfolios, portfolio)
+		newPortfolio := &models.Portfolio{
+			Name:              portfolio.Name,
+			StocksQuantityMap: portfolio.StocksQuantityMap,
+		}
+
+		portfolios = append(portfolios, newPortfolio)
 	}
 
 	return portfolios, nil

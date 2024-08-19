@@ -152,7 +152,11 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 			return nil, err
 		}
 
-		indexes = append(indexes, index)
+		newIndex := &models.Index{Name: index.Name,
+			StocksFractionMap: index.StocksFractionMap,
+		}
+
+		indexes = append(indexes, newIndex)
 	}
 
 	return indexes, nil

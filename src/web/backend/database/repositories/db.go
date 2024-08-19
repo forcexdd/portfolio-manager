@@ -94,7 +94,7 @@ func getAllPortfolios(db *sql.DB) ([]*dto_models.Portfolio, error) {
 			return nil, err
 		}
 
-		portfolios = append(portfolios, &portfolio)
+		portfolios = append(portfolios, &dto_models.Portfolio{Id: portfolio.Id, Name: portfolio.Name})
 	}
 
 	err = rows.Err()
@@ -192,7 +192,7 @@ func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 			return nil, err
 		}
 
-		stocks = append(stocks, &stock)
+		stocks = append(stocks, &dto_models.Stock{Id: stock.Id, Name: stock.Name, Price: stock.Price})
 	}
 
 	err = rows.Err()
@@ -296,7 +296,7 @@ func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_mod
 			return nil, err
 		}
 
-		portfolioStocks = append(portfolioStocks, &portfolioStock)
+		portfolioStocks = append(portfolioStocks, &dto_models.PortfolioStock{Id: portfolioStock.Id, PortfolioId: portfolioStock.PortfolioId, StockId: portfolioStock.StockId})
 	}
 
 	err = rows.Err()
@@ -330,7 +330,7 @@ func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.Por
 			return nil, err
 		}
 
-		portfolioStocks = append(portfolioStocks, &portfolioStock)
+		portfolioStocks = append(portfolioStocks, &dto_models.PortfolioStock{Id: portfolioStock.Id, PortfolioId: portfolioStock.PortfolioId, StockId: portfolioStock.StockId})
 	}
 
 	err = rows.Err()
@@ -499,7 +499,7 @@ func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexSto
 			return nil, err
 		}
 
-		indexStocks = append(indexStocks, &indexStock)
+		indexStocks = append(indexStocks, &dto_models.IndexStock{Id: indexStock.Id, IndexId: indexStock.IndexId, StockId: indexStock.StockId})
 	}
 
 	err = rows.Err()
@@ -533,7 +533,7 @@ func getAllIndexes(db *sql.DB) ([]*dto_models.Index, error) {
 			return nil, err
 		}
 
-		indexes = append(indexes, &index)
+		indexes = append(indexes, &dto_models.Index{Id: index.Id, Name: index.Name})
 	}
 
 	err = rows.Err()

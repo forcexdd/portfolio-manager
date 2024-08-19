@@ -95,12 +95,16 @@ func (p *PostgresStockRepository) GetAll() ([]*models.Stock, error) {
 	}
 
 	var stocks []*models.Stock
-	var stock *models.Stock
+	var stock models.Stock
 	for _, dtoStock := range dtoStocks {
 		stock.Name = dtoStock.Name
 		stock.Price = dtoStock.Price
 
-		stocks = append(stocks, stock)
+		newStock := &models.Stock{Name: stock.Name,
+			Price: stock.Price,
+		}
+
+		stocks = append(stocks, newStock)
 	}
 
 	return stocks, nil
