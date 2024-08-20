@@ -1,4 +1,4 @@
-package database
+package storage
 
 import (
 	"database/sql"
@@ -13,21 +13,18 @@ type Storage struct {
 	tablesOrder []string
 }
 
-func CreateNewStorage(connString string) (*Storage, error) {
-	db, err := sql.Open("postgres", connString)
+func NewStorage(connString string) (*Storage, error) {
+	db, err := openConnection(connString)
 	if err != nil {
 		return nil, err
 	}
 
-	storage := &Storage{db: db, connStr: connString, allTables: getAllTables(), tablesOrder: getTablesOrder()}
-
-	// defer closing db connection with error handling
-	defer func() {
-		closeErr := storage.db.Close()
-		if closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
+	storage := &Storage{
+		db:          db,
+		connStr:     connString,
+		allTables:   getAllTables(),
+		tablesOrder: getTablesOrder(),
+	}
 
 	err = storage.db.Ping()
 	if err != nil {
@@ -42,22 +39,25 @@ func CreateNewStorage(connString string) (*Storage, error) {
 	return storage, err
 }
 
-func (s *Storage) DeleteStorage() error {
-	var err error
-	s.db, err = sql.Open("postgres", s.connStr)
+func openConnection(connString string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", connString)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	// defer closing db connection with error handling
-	defer func() {
-		closeErr := s.db.Close()
-		if closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
+	return db, nil
+}
 
-	err = s.db.Ping()
+func (s *Storage) CloseConnection() error {
+	return s.db.Close()
+}
+
+func (s *Storage) GetDb() *sql.DB {
+	return s.db
+}
+
+func (s *Storage) DeleteStorage() error {
+	err := s.db.Ping()
 	if err != nil {
 		return err
 	}
