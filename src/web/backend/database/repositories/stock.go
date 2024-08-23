@@ -5,7 +5,6 @@ import (
 	"errors"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/dto_models"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"log"
 )
 
 type StockRepository interface {
@@ -45,7 +44,6 @@ func (p *PostgresStockRepository) GetByName(name string) (*models.Stock, error) 
 		return nil, err
 	}
 	if stockId == 0 {
-		log.Println(name)
 		return nil, errors.New("stock not found")
 	}
 
