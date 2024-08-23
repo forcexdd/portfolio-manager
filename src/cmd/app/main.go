@@ -1,37 +1,43 @@
 package main
 
 import (
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service"
 	"log"
+	"time"
 )
 
 func main() {
+	start := time.Now()
+
 	const connString = "postgresql://postgres:postgres@localhost:5432/StockPortfolioManager?sslmode=disable"
 
 	db, err := storage.NewStorage(connString)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
+	}
+	//db.DeleteStorage()
+
+	stockRepository := repositories.NewStockRepository(db.GetDb())
+	indexRepository := repositories.NewIndexRepository(db.GetDb())
+
+	stockExchangeService := stock_exchange_service.NewStockExchangeService(stockRepository, indexRepository)
+
+	err = stockExchangeService.ParseAllStocksIntoDb()
+	if err != nil {
+		panic(err)
 	}
 
-	//stockRepository := repositories.NewStockRepository(db.GetDb())
-	//portfolioRepository := repositories.NewPortfolioRepository(db.GetDb())
-	//
-	//stockAFLT := &models.Stock{Name: "AFLT", Price: 123.4567}
-	//stockGAZP := &models.Stock{Name: "GAZP", Price: 456}
-	//stockALRS := &models.Stock{Name: "ALRS", Price: 45.12}
-	//newMap := map[*models.Stock]int{
-	//	stockAFLT: 1,
-	//	stockGAZP: 34,
-	//	stockALRS: 9,
-	//}
-	//
-	//newPortfolio := &models.Portfolio{Name: "Aboba", StocksQuantityMap: newMap}
-	//
-	//stockRepository.Create(stockAFLT)
-	//stockRepository.Create(stockGAZP)
-	//stockRepository.Create(stockALRS)
-	//
-	//portfolioRepository.Create(newPortfolio)
+	err = stockExchangeService.ParseAllIndexesIntoDb()
+	if err != nil {
+		panic(err)
+	}
 
-	db.CloseConnection()
+	err = db.CloseConnection()
+	if err != nil {
+		panic(err)
+	}
+
+	log.Println("Time passed: ", time.Since(start))
 }
