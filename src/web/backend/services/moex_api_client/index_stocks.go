@@ -94,6 +94,10 @@ func parseIndexStocksDataFromIndexAnalytics(indexStocksData *moex_models.IndexAn
 			TradingSession: int(toFloat64(indexStock[6])),
 		}
 
+		if len(newIndexStock.SecIds) > 5 {
+			return nil, nil // Index contains bonds
+		}
+
 		allData = append(allData, newIndexStock)
 	}
 

@@ -1,9 +1,5 @@
 package moex_api_client
 
-import (
-	"time"
-)
-
 type MoexApiClient struct {
 	BaseUrl string
 }
@@ -40,9 +36,4 @@ func toFloat64(value interface{}) float64 {
 
 func getBaseUrl() string {
 	return "https://iss.moex.com/iss/"
-}
-
-func getCurrentTime() string {
-	currTime := time.Now()
-	return currTime.Format("2006-01-02")
 }
