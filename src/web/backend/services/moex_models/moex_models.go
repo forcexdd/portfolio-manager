@@ -35,3 +35,7 @@ type IndexStocksData struct {
 	Weight         float64
 	TradingSession int
 }
+
+type IndexAnalyticsData struct {
+	Data [][]interface{}
+}
