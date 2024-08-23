@@ -2,8 +2,8 @@ package moex_models
 
 type StockData struct {
 	TradeDate      string
-	BoardID        string
-	SecID          string
+	BoardId        string
+	SecId          string
 	TradeTime      string
 	CurPrice       float64
 	LastPrice      float64
@@ -13,4 +13,25 @@ type StockData struct {
 
 type CurrentPricesData struct {
 	Data [][]interface{}
+}
+
+type IndexData struct {
+	IndexId   string
+	ShortName string
+	From      string
+	Till      string
+}
+
+type AnalyticsData struct {
+	Data [][]interface{}
+}
+
+type IndexStocksData struct {
+	IndexId        string
+	TradeDate      string
+	Ticker         string
+	ShortNames     string
+	SecIds         string
+	Weight         float64
+	TradingSession int
 }
