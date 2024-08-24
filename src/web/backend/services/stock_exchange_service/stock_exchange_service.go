@@ -3,8 +3,8 @@ package stock_exchange_service
 import (
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/moex_api_client"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/moex_models"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_api_client"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
 	"time"
 )
 
@@ -29,12 +29,14 @@ func NewStockExchangeService(stockRepository repositories.StockRepository, index
 	return newService
 }
 
-func (m *MoexService) setApiClient() {
-	m.moexApiClient = moex_api_client.NewMoexApiClient()
-}
-
 func (m *MoexService) ParseAllStocksIntoDb() error {
-	allStocks, err := m.moexApiClient.GetAllStocks(getCurrentTime())
+	allStocks, err := m.moexApiClient.GetAllStocks(getCurrentTime()) // !!! TODO
+	if err != nil {
+		return err
+	}
+
+	var allStocksInDb []*models.Stock
+	allStocksInDb, err = m.StockRepository.GetAll()
 	if err != nil {
 		return err
 	}
@@ -45,7 +47,16 @@ func (m *MoexService) ParseAllStocksIntoDb() error {
 			Price: stock.CurPrice,
 		}
 
-		err = m.StockRepository.Create(newStock)
+		err = m.createOrUpdateStock(newStock)
+		if err != nil {
+			return err
+		}
+
+		allStocksInDb = removeStockByNameFromSlice(allStocksInDb, newStock.Name)
+	}
+
+	if len(allStocksInDb) > 0 {
+		err = m.removeOldStocksFromDb(allStocksInDb)
 		if err != nil {
 			return err
 		}
@@ -60,25 +71,26 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		return err
 	}
 
+	var allIndexesInDb []*models.Index
+	allIndexesInDb, err = m.IndexRepository.GetAll()
+	if err != nil {
+		return err
+	}
+
 	for _, index := range allIndexes {
 		var indexStocks []*moex_models.IndexStocksData
-		indexStocks, err = m.moexApiClient.GetAllIndexStocks(getCurrentTime(), index)
+		indexStocks, err = m.moexApiClient.GetAllIndexStocks(getCurrentTime(), index) // !!! TODO
 		if err != nil {
 			return err
 		}
 		if indexStocks == nil {
-			continue // Index contains bonds
+			continue // Index contains bonds OR it's weekend (you can access index names but not its stocks)
 		}
 
 		newStocksFractionMap := make(map[*models.Stock]float64)
-		for _, indexStock := range indexStocks {
-			var stock *models.Stock
-			stock, err = m.StockRepository.GetByName(indexStock.SecIds)
-			if err != nil {
-				return err
-			}
-
-			newStocksFractionMap[stock] = indexStock.Weight
+		newStocksFractionMap, err = m.createStocksFractionMapFromIndexStocks(indexStocks)
+		if err != nil {
+			return err
 		}
 
 		newIndex := &models.Index{
@@ -86,13 +98,30 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 			StocksFractionMap: newStocksFractionMap,
 		}
 
-		err = m.IndexRepository.Create(newIndex)
+		err = m.createOrUpdateIndex(newIndex)
+		if err != nil {
+			return err
+		}
+
+		allIndexesInDb = removeIndexByNameFromSlice(allIndexesInDb, newIndex.Name)
+	}
+
+	if len(allIndexesInDb) > 0 {
+		err = m.removeOldIndexesFromDb(allIndexesInDb)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func (m *MoexService) setApiClient() {
+	m.moexApiClient = moex_api_client.NewMoexApiClient()
+}
+
+func removeElementFromSliceByIndex[T interface{}](slice []T, index int) []T {
+	return append(slice[:index], slice[index+1:]...)
 }
 
 func getCurrentTime() string {

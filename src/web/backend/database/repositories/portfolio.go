@@ -58,7 +58,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 		return nil, err
 	}
 	if portfolioId == 0 {
-		return nil, errors.New("portfolio not found")
+		return nil, nil
 	}
 
 	var portfolioStocks []*dto_models.PortfolioStock

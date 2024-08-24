@@ -59,7 +59,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, err
 	}
 	if indexId == 0 {
-		return nil, errors.New("index not found")
+		return nil, nil
 	}
 
 	var indexStocks []*dto_models.IndexStock
@@ -154,6 +154,9 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 	dtoIndexes, err := getAllIndexes(p.db)
 	if err != nil {
 		return nil, err
+	}
+	if len(dtoIndexes) == 0 {
+		return nil, nil
 	}
 
 	var indexes []*models.Index
