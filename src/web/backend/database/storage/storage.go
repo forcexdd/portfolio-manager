@@ -80,7 +80,7 @@ func getAllTables() map[string]string {
 		"stocks": `
 		CREATE TABLE IF NOT EXISTS stocks (
 			id SERIAL PRIMARY KEY,
-			name VARCHAR(4) NOT NULL UNIQUE,
+			name VARCHAR(5) NOT NULL UNIQUE,
 			price DECIMAL(32, 15) NOT NULL
 		);`,
 		"portfolio_stocks": `

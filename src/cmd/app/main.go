@@ -4,20 +4,33 @@ import (
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/handlers"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service"
 	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
+	start := time.Now()
+
 	const connString = "postgresql://postgres:postgres@localhost:5432/StockPortfolioManager?sslmode=disable"
 
 	db, err := storage.NewStorage(connString)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
+	//db.DeleteStorage()
 
 	stockRepository := repositories.NewStockRepository(db.GetDb())
 	portfolioRepository := repositories.NewPortfolioRepository(db.GetDb())
+	indexRepository := repositories.NewIndexRepository(db.GetDb())
+
+	stockExchangeService := stock_exchange_service.NewStockExchangeService(stockRepository, indexRepository)
+
+	err = stockExchangeService.ParseAllStocksIntoDb()
+	if err != nil {
+		panic(err)
+	}
 
 	//stocksToCreate := []*models.Stock{
 	//	{Name: "AFLT", Price: 123.4567},
@@ -61,10 +74,20 @@ func main() {
 
 	//portfolioRepository.Delete(&models.Portfolio{Name: "Aboba portfel", StocksQuantityMap: newMap})
 
+	err = stockExchangeService.ParseAllIndexesIntoDb()
+	if err != nil {
+		panic(err)
+	}
+	log.Println("Time passed: ", time.Since(start))
+	
 	err = http.ListenAndServe("localhost:8080", nil)
 	if err != nil {
 		panic(err)
 	}
 
-	db.CloseConnection()
+	err = db.CloseConnection()
+	if err != nil {
+		panic(err)
+	}
+
 }
