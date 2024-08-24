@@ -575,7 +575,7 @@ func deleteIndexStock(db *sql.DB, indexStockId int) error {
 }
 
 func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexStock, error) {
-	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE portfolio_id = $1;`
+	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE index_id = $1;`
 	rows, err := db.Query(query, indexId)
 	if err != nil {
 		return nil, err

@@ -155,6 +155,9 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(dtoIndexes) == 0 && err == nil {
+		return nil, nil
+	}
 
 	var indexes []*models.Index
 	var index *models.Index

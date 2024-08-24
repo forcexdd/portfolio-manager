@@ -110,6 +110,9 @@ func (p *PostgresStockRepository) GetAll() ([]*models.Stock, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(dtoStocks) == 0 && err == nil {
+		return nil, nil
+	}
 
 	var stocks []*models.Stock
 	var stock models.Stock
