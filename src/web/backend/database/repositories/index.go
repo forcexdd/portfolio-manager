@@ -59,7 +59,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, err
 	}
 	if indexId == 0 {
-		return nil, errors.New("index not found")
+		return nil, nil
 	}
 
 	var indexStocks []*dto_models.IndexStock

@@ -44,7 +44,7 @@ func (p *PostgresStockRepository) GetByName(name string) (*models.Stock, error) 
 		return nil, err
 	}
 	if stockId == 0 {
-		return nil, errors.New("stock not found")
+		return nil, nil
 	}
 
 	var dtoStock *dto_models.Stock
