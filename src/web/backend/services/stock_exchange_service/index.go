@@ -5,6 +5,29 @@ import (
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
 )
 
+func (m *MoexService) parseLatestIndexStocks(index *moex_models.IndexData, maxDays int) ([]*moex_models.IndexStocksData, error) {
+	parseTime := getCurrentTime()
+
+	allIndexStocks, err := m.moexApiClient.GetAllIndexStocks(formatTime(parseTime), index)
+	if err != nil {
+		return nil, err
+	}
+	maxDays--
+
+	for len(allIndexStocks) == 0 && maxDays != 0 {
+		parseTime = parseTime.AddDate(0, 0, -1)
+
+		allIndexStocks, err = m.moexApiClient.GetAllIndexStocks(formatTime(parseTime), index)
+		if err != nil {
+			return nil, err
+		}
+
+		maxDays--
+	}
+
+	return allIndexStocks, nil
+}
+
 func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
 	dbIndex, err := m.IndexRepository.GetByName(index.Name)
 	if err != nil {

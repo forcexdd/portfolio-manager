@@ -96,7 +96,7 @@ func parseIndexStocksDataFromIndexAnalytics(indexStocksData *moex_models.IndexAn
 
 		if len(newIndexStock.SecIds) > 5 {
 			return nil, nil // Index contains bonds
-		}
+		} // Ignoring bonds indexes
 
 		allData = append(allData, newIndexStock)
 	}

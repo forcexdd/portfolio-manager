@@ -30,7 +30,7 @@ func NewStockExchangeService(stockRepository repositories.StockRepository, index
 }
 
 func (m *MoexService) ParseAllStocksIntoDb() error {
-	allStocks, err := m.moexApiClient.GetAllStocks(getCurrentTime()) // !!! TODO
+	allStocks, err := m.parseLatestStocks(getMaxDaysBeforeLatestDate())
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 
 	for _, index := range allIndexes {
 		var indexStocks []*moex_models.IndexStocksData
-		indexStocks, err = m.moexApiClient.GetAllIndexStocks(getCurrentTime(), index) // !!! TODO
+		indexStocks, err = m.parseLatestIndexStocks(index, getMaxDaysBeforeLatestDate())
 		if err != nil {
 			return err
 		}
@@ -120,11 +120,19 @@ func (m *MoexService) setApiClient() {
 	m.moexApiClient = moex_api_client.NewMoexApiClient()
 }
 
+func getMaxDaysBeforeLatestDate() int {
+	return 15
+}
+
 func removeElementFromSliceByIndex[T interface{}](slice []T, index int) []T {
 	return append(slice[:index], slice[index+1:]...)
 }
 
-func getCurrentTime() string {
+func getCurrentTime() time.Time {
 	currTime := time.Now()
-	return currTime.Format("2006-01-02")
+	return currTime
+}
+
+func formatTime(time time.Time) string {
+	return time.Format("2006-01-02")
 }
