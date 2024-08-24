@@ -155,7 +155,7 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(dtoIndexes) == 0 && err == nil {
+	if len(dtoIndexes) == 0 {
 		return nil, nil
 	}
 

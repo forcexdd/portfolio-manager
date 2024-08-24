@@ -110,7 +110,7 @@ func (p *PostgresStockRepository) GetAll() ([]*models.Stock, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(dtoStocks) == 0 && err == nil {
+	if len(dtoStocks) == 0 {
 		return nil, nil
 	}
 
