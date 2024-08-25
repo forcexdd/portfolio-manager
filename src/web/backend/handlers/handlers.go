@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/chart_drawer"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -211,7 +211,7 @@ func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	pieChart, err := services.GetStockPieChart(portfolio)
+	pieChart, err := chart_drawer.GetStockPieChart(portfolio)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

@@ -1,4 +1,4 @@
-package services
+package chart_drawer
 
 import (
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
