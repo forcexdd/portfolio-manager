@@ -30,7 +30,7 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 		return err
 	}
 	if indexId != 0 {
-		return errors.New("index already exists")
+		return ErrIndexAlreadyExists
 	}
 
 	var createdIndex *dto_models.Index
@@ -59,7 +59,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, err
 	}
 	if indexId == 0 {
-		return nil, nil
+		return nil, ErrIndexNotFound
 	}
 
 	var indexAssets []*dto_models.IndexAsset
@@ -77,7 +77,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 			return nil, err
 		}
 		if asset == nil {
-			return nil, errors.New("asset not found")
+			return nil, ErrAssetNotFound
 		}
 
 		relationship, err = getIndexAssetRelationshipByIndexAssetId(p.db, indexAsset.Id)
@@ -108,7 +108,7 @@ func (p *PostgresIndexRepository) Update(index *models.Index) error {
 		return err
 	}
 	if indexId == 0 {
-		return errors.New("index not found")
+		return ErrIndexNotFound
 	}
 
 	err = deleteAllAssetsFromIndex(p.db, indexId)
@@ -133,7 +133,7 @@ func (p *PostgresIndexRepository) Delete(index *models.Index) error {
 		return err
 	}
 	if indexId == 0 {
-		return errors.New("index not found")
+		return ErrIndexNotFound
 	}
 
 	err = deleteAllAssetsFromIndex(p.db, indexId)
@@ -156,7 +156,7 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 		return nil, err
 	}
 	if len(dtoIndexes) == 0 {
-		return nil, nil
+		return nil, ErrIndexNotFound
 	}
 
 	var indexes []*models.Index

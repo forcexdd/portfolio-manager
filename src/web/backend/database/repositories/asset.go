@@ -30,7 +30,7 @@ func (p *PostgresAssetRepository) Create(asset *models.Asset) error {
 		return err
 	}
 	if assetId != 0 {
-		return errors.New("asset already exists")
+		return ErrAssetAlreadyExists
 	}
 
 	_, err = createAsset(p.db, asset.Name, asset.Price)
@@ -44,7 +44,7 @@ func (p *PostgresAssetRepository) GetByName(name string) (*models.Asset, error) 
 		return nil, err
 	}
 	if assetId == 0 {
-		return nil, nil
+		return nil, ErrAssetNotFound
 	}
 
 	var dtoAsset *dto_models.Asset
@@ -65,7 +65,7 @@ func (p *PostgresAssetRepository) Update(asset *models.Asset) error {
 		return err
 	}
 	if assetId == 0 {
-		return errors.New("asset not found")
+		return ErrAssetNotFound
 	}
 
 	var dtoAsset *dto_models.Asset
@@ -88,7 +88,7 @@ func (p *PostgresAssetRepository) Delete(asset *models.Asset) error {
 		return err
 	}
 	if assetId == 0 {
-		return errors.New("asset not found")
+		return ErrAssetNotFound
 	}
 
 	err = deleteAssetFromConnectedTables(p.db, assetId)
@@ -111,7 +111,7 @@ func (p *PostgresAssetRepository) GetAll() ([]*models.Asset, error) {
 		return nil, err
 	}
 	if len(dtoAssets) == 0 {
-		return nil, nil
+		return nil, ErrAssetNotFound
 	}
 
 	var assets []*models.Asset

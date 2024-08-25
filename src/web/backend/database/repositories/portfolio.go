@@ -30,7 +30,7 @@ func (p *PostgresPortfolioRepository) Create(portfolio *models.Portfolio) error 
 		return err
 	}
 	if portfolioId != 0 {
-		return errors.New("portfolio already exists")
+		return ErrPortfolioAlreadyExists
 	}
 
 	createdPortfolio, err := createPortfolio(p.db, portfolio.Name)
@@ -58,7 +58,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 		return nil, err
 	}
 	if portfolioId == 0 {
-		return nil, nil
+		return nil, ErrPortfolioNotFound
 	}
 
 	var portfolioAssets []*dto_models.PortfolioAsset
@@ -76,7 +76,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 			return nil, err
 		}
 		if asset == nil {
-			return nil, errors.New("asset not found")
+			return nil, ErrAssetNotFound
 		}
 
 		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetId(p.db, portfolioAsset.Id)
@@ -107,7 +107,7 @@ func (p *PostgresPortfolioRepository) Update(portfolio *models.Portfolio) error 
 		return err
 	}
 	if portfolioId == 0 {
-		return errors.New("portfolio not found")
+		return ErrPortfolioNotFound
 	}
 
 	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
@@ -132,7 +132,7 @@ func (p *PostgresPortfolioRepository) Delete(portfolio *models.Portfolio) error 
 		return err
 	}
 	if portfolioId == 0 {
-		return errors.New("portfolio not found")
+		return ErrPortfolioNotFound
 	}
 
 	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
@@ -153,6 +153,9 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*models.Portfolio, error) {
 	dtoPortfolios, err := getAllPortfolios(p.db)
 	if err != nil {
 		return nil, err
+	}
+	if len(dtoPortfolios) == 0 {
+		return nil, ErrPortfolioNotFound
 	}
 
 	var portfolios []*models.Portfolio
