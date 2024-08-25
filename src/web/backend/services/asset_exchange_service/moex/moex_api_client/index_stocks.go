@@ -3,20 +3,20 @@ package moex_api_client
 import (
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
 	"io"
 	"net/http"
 	"strconv"
 )
 
-func (m *MoexApiClient) GetAllIndexStocks(time string, index *moex_models.IndexData) ([]*moex_models.IndexStocksData, error) {
+func (m *MoexApiClient) GetAllIndexAssets(time string, index *moex_models.IndexData) ([]*moex_models.IndexAssetsData, error) {
 	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics/" + index.IndexId + ".json?lang=en&date=" + time + "&start="
 	start := 0
-	var allData []*moex_models.IndexStocksData
+	var allData []*moex_models.IndexAssetsData
 	hasData := true
 
 	for hasData {
-		newData, err := m.getIndexStocksData(url, start)
+		newData, err := m.getIndexAssetsData(url, start)
 		if err != nil {
 			return nil, err
 		}
@@ -32,7 +32,7 @@ func (m *MoexApiClient) GetAllIndexStocks(time string, index *moex_models.IndexD
 	return allData, nil
 }
 
-func (m *MoexApiClient) getIndexStocksData(url string, start int) ([]*moex_models.IndexStocksData, error) {
+func (m *MoexApiClient) getIndexAssetsData(url string, start int) ([]*moex_models.IndexAssetsData, error) {
 	response, err := http.Get(url + strconv.Itoa(start))
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (m *MoexApiClient) getIndexStocksData(url string, start int) ([]*moex_model
 		return nil, err
 	}
 
-	return parseIndexStocksDataFromIndexAnalytics(currPricesData)
+	return parseIndexAssetsDataFromIndexAnalytics(currPricesData)
 }
 
 func parseIndexAnalyticsDataFromJson(body []byte) (*moex_models.IndexAnalyticsData, error) {
@@ -76,29 +76,29 @@ func parseIndexAnalyticsDataFromJson(body []byte) (*moex_models.IndexAnalyticsDa
 	return &data, nil
 }
 
-func parseIndexStocksDataFromIndexAnalytics(indexStocksData *moex_models.IndexAnalyticsData) ([]*moex_models.IndexStocksData, error) {
-	var allData []*moex_models.IndexStocksData
+func parseIndexAssetsDataFromIndexAnalytics(indexAssetsData *moex_models.IndexAnalyticsData) ([]*moex_models.IndexAssetsData, error) {
+	var allData []*moex_models.IndexAssetsData
 
-	for _, indexStock := range indexStocksData.Data {
-		if len(indexStock) != 7 {
-			return nil, errors.New("invalid index stock data")
+	for _, indexAsset := range indexAssetsData.Data {
+		if len(indexAsset) != 7 {
+			return nil, errors.New("invalid index asset data")
 		}
 
-		newIndexStock := &moex_models.IndexStocksData{
-			IndexId:        toString(indexStock[0]),
-			TradeDate:      toString(indexStock[1]),
-			Ticker:         toString(indexStock[2]),
-			ShortNames:     toString(indexStock[3]),
-			SecIds:         toString(indexStock[4]),
-			Weight:         toFloat64(indexStock[5]),
-			TradingSession: int(toFloat64(indexStock[6])),
+		newIndexAsset := &moex_models.IndexAssetsData{
+			IndexId:        toString(indexAsset[0]),
+			TradeDate:      toString(indexAsset[1]),
+			Ticker:         toString(indexAsset[2]),
+			ShortNames:     toString(indexAsset[3]),
+			SecIds:         toString(indexAsset[4]),
+			Weight:         toFloat64(indexAsset[5]),
+			TradingSession: int(toFloat64(indexAsset[6])),
 		}
 
-		if len(newIndexStock.SecIds) > 5 {
+		if len(newIndexAsset.SecIds) > 5 {
 			return nil, nil // Index contains bonds
 		} // Ignoring bonds indexes
 
-		allData = append(allData, newIndexStock)
+		allData = append(allData, newIndexAsset)
 	}
 
 	return allData, nil

@@ -3,8 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/dto_models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/dto_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 )
 
 /*
@@ -109,30 +109,30 @@ func getAllPortfolios(db *sql.DB) ([]*dto_models.Portfolio, error) {
 }
 
 /*
-	Stock
+	Asset
 */
 
-func createStock(db *sql.DB, name string, price float64) (*dto_models.Stock, error) {
-	query := `INSERT INTO stocks (name, price) VALUES ($1, $2) RETURNING id;`
+func createAsset(db *sql.DB, name string, price float64) (*dto_models.Asset, error) {
+	query := `INSERT INTO assets (name, price) VALUES ($1, $2) RETURNING id;`
 
-	var stockId int
-	err := db.QueryRow(query, name, price).Scan(&stockId)
+	var assetId int
+	err := db.QueryRow(query, name, price).Scan(&assetId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto_models.Stock{
-		Id:    stockId,
+	return &dto_models.Asset{
+		Id:    assetId,
 		Name:  name,
 		Price: price,
 	}, nil
 }
 
-func getStock(db *sql.DB, stockId int) (*dto_models.Stock, error) {
-	query := `SELECT id, name, price FROM stocks WHERE id = $1;`
+func getAsset(db *sql.DB, assetId int) (*dto_models.Asset, error) {
+	query := `SELECT id, name, price FROM assets WHERE id = $1;`
 
-	var stock dto_models.Stock
-	err := db.QueryRow(query, stockId).Scan(&stock.Id, &stock.Name, &stock.Price)
+	var asset dto_models.Asset
+	err := db.QueryRow(query, assetId).Scan(&asset.Id, &asset.Name, &asset.Price)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -140,28 +140,28 @@ func getStock(db *sql.DB, stockId int) (*dto_models.Stock, error) {
 		return nil, err
 	}
 
-	return &stock, nil
+	return &asset, nil
 }
 
-func updateStock(db *sql.DB, stockId int, newPrice float64) error {
-	query := `UPDATE stocks SET price = $1 WHERE id = $2;`
-	_, err := db.Exec(query, newPrice, stockId)
+func updateAsset(db *sql.DB, assetId int, newPrice float64) error {
+	query := `UPDATE assets SET price = $1 WHERE id = $2;`
+	_, err := db.Exec(query, newPrice, assetId)
 
 	return err
 }
 
-func deleteStock(db *sql.DB, stockId int) error {
-	query := `DELETE FROM stocks WHERE id = $1;`
-	_, err := db.Exec(query, stockId)
+func deleteAsset(db *sql.DB, assetId int) error {
+	query := `DELETE FROM assets WHERE id = $1;`
+	_, err := db.Exec(query, assetId)
 
 	return err
 }
 
-func getStockIdByName(db *sql.DB, name string) (int, error) {
-	query := `SELECT id FROM stocks WHERE name = $1;`
+func getAssetIdByName(db *sql.DB, name string) (int, error) {
+	query := `SELECT id FROM assets WHERE name = $1;`
 
-	var stockId int
-	err := db.QueryRow(query, name).Scan(&stockId)
+	var assetId int
+	err := db.QueryRow(query, name).Scan(&assetId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return 0, nil
@@ -169,11 +169,11 @@ func getStockIdByName(db *sql.DB, name string) (int, error) {
 		return 0, err
 	}
 
-	return stockId, nil
+	return assetId, nil
 }
 
-func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
-	query := `SELECT id, name, price FROM stocks;`
+func getAllAssets(db *sql.DB) ([]*dto_models.Asset, error) {
+	query := `SELECT id, name, price FROM assets;`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -186,21 +186,21 @@ func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 		}
 	}()
 
-	var stocks []*dto_models.Stock
-	var stock dto_models.Stock
+	var assets []*dto_models.Asset
+	var asset dto_models.Asset
 	for rows.Next() {
-		err = rows.Scan(&stock.Id, &stock.Name, &stock.Price)
+		err = rows.Scan(&asset.Id, &asset.Name, &asset.Price)
 		if err != nil {
 			return nil, err
 		}
 
-		newStock := &dto_models.Stock{
-			Id:    stock.Id,
-			Name:  stock.Name,
-			Price: stock.Price,
+		newAsset := &dto_models.Asset{
+			Id:    asset.Id,
+			Name:  asset.Name,
+			Price: asset.Price,
 		}
 
-		stocks = append(stocks, newStock)
+		assets = append(assets, newAsset)
 	}
 
 	err = rows.Err()
@@ -208,69 +208,69 @@ func getAllStocks(db *sql.DB) ([]*dto_models.Stock, error) {
 		return nil, err
 	}
 
-	return stocks, nil
+	return assets, nil
 }
 
-func deleteStockFromConnectedTables(db *sql.DB, stockId int) error {
+func deleteAssetFromConnectedTables(db *sql.DB, assetId int) error {
 	query := `
-        DELETE FROM portfolio_stocks_relationship
-        WHERE portfolio_stocks_id IN (
-            SELECT id FROM portfolio_stocks WHERE stock_id = $1
+        DELETE FROM portfolio_assets_relationship
+        WHERE portfolio_assets_id IN (
+            SELECT id FROM portfolio_assets WHERE asset_id = $1
         );
     `
-	_, err := db.Exec(query, stockId)
+	_, err := db.Exec(query, assetId)
 	if err != nil {
 		return err
 	}
 
-	query = `DELETE FROM portfolio_stocks WHERE stock_id = $1;`
-	_, err = db.Exec(query, stockId)
+	query = `DELETE FROM portfolio_assets WHERE asset_id = $1;`
+	_, err = db.Exec(query, assetId)
 	if err != nil {
 		return err
 	}
 
 	query = `
-        DELETE FROM index_stocks_relationship
-        WHERE index_stocks_id IN (
-            SELECT id FROM index_stocks WHERE stock_id = $1
+        DELETE FROM index_assets_relationship
+        WHERE index_assets_id IN (
+            SELECT id FROM index_assets WHERE asset_id = $1
         );
     `
-	_, err = db.Exec(query, stockId)
+	_, err = db.Exec(query, assetId)
 	if err != nil {
 		return err
 	}
 
-	query = `DELETE FROM index_stocks WHERE stock_id = $1;`
-	_, err = db.Exec(query, stockId)
+	query = `DELETE FROM index_assets WHERE asset_id = $1;`
+	_, err = db.Exec(query, assetId)
 
 	return err
 }
 
 /*
-	PortfolioStock
+	PortfolioAsset
 */
 
-func createPortfolioStock(db *sql.DB, portfolioId int, stockId int) (*dto_models.PortfolioStock, error) {
-	query := `INSERT INTO portfolio_stocks (portfolio_id, stock_id) VALUES ($1, $2) RETURNING id;`
+func createPortfolioAsset(db *sql.DB, portfolioId int, assetId int) (*dto_models.PortfolioAsset, error) {
+	query := `INSERT INTO portfolio_assets (portfolio_id, asset_id) VALUES ($1, $2) RETURNING id;`
 
-	var portfolioStockId int
-	err := db.QueryRow(query, portfolioId, stockId).Scan(&portfolioStockId)
+	var portfolioAssetId int
+	err := db.QueryRow(query, portfolioId, assetId).Scan(&portfolioAssetId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto_models.PortfolioStock{
-		Id:          portfolioStockId,
+	return &dto_models.PortfolioAsset{
+		Id:          portfolioAssetId,
 		PortfolioId: portfolioId,
-		StockId:     stockId,
+		AssetId:     assetId,
 	}, nil
 }
 
-func getPortfolioStock(db *sql.DB, portfolioStockId int) (*dto_models.PortfolioStock, error) {
-	query := `SELECT id, portfolio_id, stock_id FROM portfolio_stocks WHERE id = $1;`
+func getPortfolioAsset(db *sql.DB, portfolioAssetId int) (*dto_models.PortfolioAsset, error) {
+	query := `SELECT id, portfolio_id, asset_id FROM portfolio_assets WHERE id = $1;`
 
-	var portfolioStock dto_models.PortfolioStock
-	err := db.QueryRow(query, portfolioStockId).Scan(&portfolioStock.Id, &portfolioStock.PortfolioId, &portfolioStock.StockId)
+	var portfolioAsset dto_models.PortfolioAsset
+	err := db.QueryRow(query, portfolioAssetId).Scan(&portfolioAsset.Id, &portfolioAsset.PortfolioId, &portfolioAsset.AssetId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -278,11 +278,11 @@ func getPortfolioStock(db *sql.DB, portfolioStockId int) (*dto_models.PortfolioS
 		return nil, err
 	}
 
-	return &portfolioStock, nil
+	return &portfolioAsset, nil
 }
 
-func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_models.PortfolioStock, error) {
-	query := `SELECT id, portfolio_id, stock_id FROM portfolio_stocks WHERE portfolio_id = $1;`
+func getAllPortfolioAssetsByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_models.PortfolioAsset, error) {
+	query := `SELECT id, portfolio_id, asset_id FROM portfolio_assets WHERE portfolio_id = $1;`
 	rows, err := db.Query(query, portfolioId)
 	if err != nil {
 		return nil, err
@@ -295,21 +295,21 @@ func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_mod
 		}
 	}()
 
-	var portfolioStocks []*dto_models.PortfolioStock
-	var portfolioStock dto_models.PortfolioStock
+	var portfolioAssets []*dto_models.PortfolioAsset
+	var portfolioAsset dto_models.PortfolioAsset
 	for rows.Next() {
-		err = rows.Scan(&portfolioStock.Id, &portfolioStock.PortfolioId, &portfolioStock.StockId)
+		err = rows.Scan(&portfolioAsset.Id, &portfolioAsset.PortfolioId, &portfolioAsset.AssetId)
 		if err != nil {
 			return nil, err
 		}
 
-		newPortfolioStocks := &dto_models.PortfolioStock{
-			Id:          portfolioStock.Id,
-			PortfolioId: portfolioStock.PortfolioId,
-			StockId:     portfolioStock.StockId,
+		newPortfolioAssets := &dto_models.PortfolioAsset{
+			Id:          portfolioAsset.Id,
+			PortfolioId: portfolioAsset.PortfolioId,
+			AssetId:     portfolioAsset.AssetId,
 		}
 
-		portfolioStocks = append(portfolioStocks, newPortfolioStocks)
+		portfolioAssets = append(portfolioAssets, newPortfolioAssets)
 	}
 
 	err = rows.Err()
@@ -317,12 +317,12 @@ func getAllPortfolioStocksByPortfolioId(db *sql.DB, portfolioId int) ([]*dto_mod
 		return nil, err
 	}
 
-	return portfolioStocks, nil
+	return portfolioAssets, nil
 }
 
-func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.PortfolioStock, error) {
-	query := `SELECT id, portfolio_id, stock_id FROM portfolio_stocks WHERE stock_id = $1;`
-	rows, err := db.Query(query, stockId)
+func getAllPortfolioAssetsByAssetId(db *sql.DB, assetId int) ([]*dto_models.PortfolioAsset, error) {
+	query := `SELECT id, portfolio_id, asset_id FROM portfolio_assets WHERE asset_id = $1;`
+	rows, err := db.Query(query, assetId)
 	if err != nil {
 		return nil, err
 	}
@@ -334,21 +334,21 @@ func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.Por
 		}
 	}()
 
-	var portfolioStocks []*dto_models.PortfolioStock
-	var portfolioStock dto_models.PortfolioStock
+	var portfolioAssets []*dto_models.PortfolioAsset
+	var portfolioAsset dto_models.PortfolioAsset
 	for rows.Next() {
-		err = rows.Scan(&portfolioStock.Id, &portfolioStock.PortfolioId, &portfolioStock.StockId)
+		err = rows.Scan(&portfolioAsset.Id, &portfolioAsset.PortfolioId, &portfolioAsset.AssetId)
 		if err != nil {
 			return nil, err
 		}
 
-		newPortfolioStocks := &dto_models.PortfolioStock{
-			Id:          portfolioStock.Id,
-			PortfolioId: portfolioStock.PortfolioId,
-			StockId:     portfolioStock.StockId,
+		newPortfolioAssets := &dto_models.PortfolioAsset{
+			Id:          portfolioAsset.Id,
+			PortfolioId: portfolioAsset.PortfolioId,
+			AssetId:     portfolioAsset.AssetId,
 		}
 
-		portfolioStocks = append(portfolioStocks, newPortfolioStocks)
+		portfolioAssets = append(portfolioAssets, newPortfolioAssets)
 	}
 
 	err = rows.Err()
@@ -356,41 +356,41 @@ func getAllPortfolioStocksByStocksId(db *sql.DB, stockId int) ([]*dto_models.Por
 		return nil, err
 	}
 
-	return portfolioStocks, nil
+	return portfolioAssets, nil
 }
 
-func deletePortfolioStock(db *sql.DB, portfolioStockId int) error {
-	query := `DELETE FROM portfolio_stocks WHERE id = $1;`
-	_, err := db.Exec(query, portfolioStockId)
+func deletePortfolioAsset(db *sql.DB, portfolioAssetId int) error {
+	query := `DELETE FROM portfolio_assets WHERE id = $1;`
+	_, err := db.Exec(query, portfolioAssetId)
 
 	return err
 }
 
 /*
-	PortfolioStockRelationship
+	PortfolioAssetRelationship
 */
 
-func createPortfolioStockRelationship(db *sql.DB, portfolioStockId int, quantity int) (*dto_models.PortfolioStockRelationship, error) {
-	query := `INSERT INTO portfolio_stocks_relationship (portfolio_stocks_id, quantity) VALUES ($1, $2) RETURNING id;`
+func createPortfolioAssetRelationship(db *sql.DB, portfolioAssetId int, quantity int) (*dto_models.PortfolioAssetRelationship, error) {
+	query := `INSERT INTO portfolio_assets_relationship (portfolio_assets_id, quantity) VALUES ($1, $2) RETURNING id;`
 
-	var portfolioStockRelationshipId int
-	err := db.QueryRow(query, portfolioStockId, quantity).Scan(&portfolioStockRelationshipId)
+	var portfolioAssetRelationshipId int
+	err := db.QueryRow(query, portfolioAssetId, quantity).Scan(&portfolioAssetRelationshipId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto_models.PortfolioStockRelationship{
-		Id:               portfolioStockRelationshipId,
-		PortfolioStockId: portfolioStockId,
+	return &dto_models.PortfolioAssetRelationship{
+		Id:               portfolioAssetRelationshipId,
+		PortfolioAssetId: portfolioAssetId,
 		Quantity:         quantity,
 	}, nil
 }
 
-func getPortfolioStockRelationship(db *sql.DB, relationshipId int) (*dto_models.PortfolioStockRelationship, error) {
-	query := `SELECT id, portfolio_stocks_id, quantity FROM portfolio_stocks_relationship WHERE id = $1;`
+func getPortfolioAssetRelationship(db *sql.DB, relationshipId int) (*dto_models.PortfolioAssetRelationship, error) {
+	query := `SELECT id, portfolio_assets_id, quantity FROM portfolio_assets_relationship WHERE id = $1;`
 
-	var relationship dto_models.PortfolioStockRelationship
-	err := db.QueryRow(query, relationshipId).Scan(&relationship.Id, &relationship.PortfolioStockId, &relationship.Quantity)
+	var relationship dto_models.PortfolioAssetRelationship
+	err := db.QueryRow(query, relationshipId).Scan(&relationship.Id, &relationship.PortfolioAssetId, &relationship.Quantity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -401,25 +401,25 @@ func getPortfolioStockRelationship(db *sql.DB, relationshipId int) (*dto_models.
 	return &relationship, nil
 }
 
-func updatePortfolioStockRelationship(db *sql.DB, relationshipId int, newQuantity int) error {
-	query := `UPDATE portfolio_stocks_relationship SET quantity = $1 WHERE id = $2;`
+func updatePortfolioAssetRelationship(db *sql.DB, relationshipId int, newQuantity int) error {
+	query := `UPDATE portfolio_assets_relationship SET quantity = $1 WHERE id = $2;`
 	_, err := db.Exec(query, newQuantity, relationshipId)
 
 	return err
 }
 
-func deletePortfolioStockRelationship(db *sql.DB, relationshipId int) error {
-	query := `DELETE FROM portfolio_stocks_relationship WHERE id = $1;`
+func deletePortfolioAssetRelationship(db *sql.DB, relationshipId int) error {
+	query := `DELETE FROM portfolio_assets_relationship WHERE id = $1;`
 	_, err := db.Exec(query, relationshipId)
 
 	return err
 }
 
-func getPortfolioStockRelationshipByPortfolioStockId(db *sql.DB, portfolioStockId int) (*dto_models.PortfolioStockRelationship, error) {
-	query := `SELECT id, portfolio_stocks_id, quantity FROM portfolio_stocks_relationship WHERE portfolio_stocks_id = $1;`
+func getPortfolioAssetRelationshipByPortfolioAssetId(db *sql.DB, portfolioAssetId int) (*dto_models.PortfolioAssetRelationship, error) {
+	query := `SELECT id, portfolio_assets_id, quantity FROM portfolio_assets_relationship WHERE portfolio_assets_id = $1;`
 
-	var relationship dto_models.PortfolioStockRelationship
-	err := db.QueryRow(query, portfolioStockId).Scan(&relationship.Id, &relationship.PortfolioStockId, &relationship.Quantity)
+	var relationship dto_models.PortfolioAssetRelationship
+	err := db.QueryRow(query, portfolioAssetId).Scan(&relationship.Id, &relationship.PortfolioAssetId, &relationship.Quantity)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -533,30 +533,30 @@ func getAllIndexes(db *sql.DB) ([]*dto_models.Index, error) {
 }
 
 /*
-	IndexStock
+	IndexAsset
 */
 
-func createIndexStock(db *sql.DB, indexId int, stockId int) (*dto_models.IndexStock, error) {
-	query := `INSERT INTO index_stocks (index_id, stock_id) VALUES ($1, $2) RETURNING id;`
+func createIndexAsset(db *sql.DB, indexId int, assetId int) (*dto_models.IndexAsset, error) {
+	query := `INSERT INTO index_assets (index_id, asset_id) VALUES ($1, $2) RETURNING id;`
 
-	var indexStockId int
-	err := db.QueryRow(query, indexId, stockId).Scan(&indexStockId)
+	var indexAssetId int
+	err := db.QueryRow(query, indexId, assetId).Scan(&indexAssetId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto_models.IndexStock{
-		Id:      indexStockId,
+	return &dto_models.IndexAsset{
+		Id:      indexAssetId,
 		IndexId: indexId,
-		StockId: stockId,
+		AssetId: assetId,
 	}, nil
 }
 
-func getIndexStock(db *sql.DB, indexStockId int) (*dto_models.IndexStock, error) {
-	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE id = $1;`
+func getIndexAsset(db *sql.DB, indexAssetId int) (*dto_models.IndexAsset, error) {
+	query := `SELECT id, index_id, asset_id FROM index_assets WHERE id = $1;`
 
-	var indexStock dto_models.IndexStock
-	err := db.QueryRow(query, indexStockId).Scan(&indexStock.Id, &indexStock.IndexId, &indexStock.StockId)
+	var indexAsset dto_models.IndexAsset
+	err := db.QueryRow(query, indexAssetId).Scan(&indexAsset.Id, &indexAsset.IndexId, &indexAsset.AssetId)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -564,18 +564,18 @@ func getIndexStock(db *sql.DB, indexStockId int) (*dto_models.IndexStock, error)
 		return nil, err
 	}
 
-	return &indexStock, nil
+	return &indexAsset, nil
 }
 
-func deleteIndexStock(db *sql.DB, indexStockId int) error {
-	query := `DELETE FROM index_stocks WHERE id = $1;`
-	_, err := db.Exec(query, indexStockId)
+func deleteIndexAsset(db *sql.DB, indexAssetId int) error {
+	query := `DELETE FROM index_assets WHERE id = $1;`
+	_, err := db.Exec(query, indexAssetId)
 
 	return err
 }
 
-func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexStock, error) {
-	query := `SELECT id, index_id, stock_id FROM index_stocks WHERE index_id = $1;`
+func getAllIndexAssetsByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexAsset, error) {
+	query := `SELECT id, index_id, asset_id FROM index_assets WHERE index_id = $1;`
 	rows, err := db.Query(query, indexId)
 	if err != nil {
 		return nil, err
@@ -588,21 +588,21 @@ func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexSto
 		}
 	}()
 
-	var indexStocks []*dto_models.IndexStock
-	var indexStock dto_models.IndexStock
+	var indexAssets []*dto_models.IndexAsset
+	var indexAsset dto_models.IndexAsset
 	for rows.Next() {
-		err = rows.Scan(&indexStock.Id, &indexStock.IndexId, &indexStock.StockId)
+		err = rows.Scan(&indexAsset.Id, &indexAsset.IndexId, &indexAsset.AssetId)
 		if err != nil {
 			return nil, err
 		}
 
-		newIndexStocks := &dto_models.IndexStock{
-			Id:      indexStock.Id,
-			IndexId: indexStock.IndexId,
-			StockId: indexStock.StockId,
+		newIndexAssets := &dto_models.IndexAsset{
+			Id:      indexAsset.Id,
+			IndexId: indexAsset.IndexId,
+			AssetId: indexAsset.AssetId,
 		}
 
-		indexStocks = append(indexStocks, newIndexStocks)
+		indexAssets = append(indexAssets, newIndexAssets)
 	}
 
 	err = rows.Err()
@@ -610,34 +610,34 @@ func getAllIndexStocksByIndexId(db *sql.DB, indexId int) ([]*dto_models.IndexSto
 		return nil, err
 	}
 
-	return indexStocks, nil
+	return indexAssets, nil
 }
 
 /*
-	IndexStockRelationship
+	IndexAssetRelationship
 */
 
-func createIndexStockRelationship(db *sql.DB, indexStockId int, fraction float64) (*dto_models.IndexStockRelationship, error) {
-	query := `INSERT INTO index_stocks_relationship (index_stocks_id, fraction) VALUES ($1, $2) RETURNING id;`
+func createIndexAssetRelationship(db *sql.DB, indexAssetId int, fraction float64) (*dto_models.IndexAssetRelationship, error) {
+	query := `INSERT INTO index_assets_relationship (index_assets_id, fraction) VALUES ($1, $2) RETURNING id;`
 
 	var relationshipId int
-	err := db.QueryRow(query, indexStockId, fraction).Scan(&relationshipId)
+	err := db.QueryRow(query, indexAssetId, fraction).Scan(&relationshipId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &dto_models.IndexStockRelationship{
+	return &dto_models.IndexAssetRelationship{
 		Id:           relationshipId,
-		IndexStockId: indexStockId,
+		IndexAssetId: indexAssetId,
 		Fraction:     fraction,
 	}, nil
 }
 
-func getIndexStockRelationship(db *sql.DB, relationshipId int) (*dto_models.IndexStockRelationship, error) {
-	query := `SELECT id, index_stocks_id, fraction FROM index_stocks_relationship WHERE id = $1;`
+func getIndexAssetRelationship(db *sql.DB, relationshipId int) (*dto_models.IndexAssetRelationship, error) {
+	query := `SELECT id, index_assets_id, fraction FROM index_assets_relationship WHERE id = $1;`
 
-	var relationship dto_models.IndexStockRelationship
-	err := db.QueryRow(query, relationshipId).Scan(&relationship.Id, &relationship.IndexStockId, &relationship.Fraction)
+	var relationship dto_models.IndexAssetRelationship
+	err := db.QueryRow(query, relationshipId).Scan(&relationship.Id, &relationship.IndexAssetId, &relationship.Fraction)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -648,25 +648,25 @@ func getIndexStockRelationship(db *sql.DB, relationshipId int) (*dto_models.Inde
 	return &relationship, nil
 }
 
-func updateIndexStockRelationship(db *sql.DB, relationshipId int, newFraction float64) error {
-	query := `UPDATE index_stocks_relationship SET fraction = $1 WHERE id = $2;`
+func updateIndexAssetRelationship(db *sql.DB, relationshipId int, newFraction float64) error {
+	query := `UPDATE index_assets_relationship SET fraction = $1 WHERE id = $2;`
 	_, err := db.Exec(query, newFraction, relationshipId)
 
 	return err
 }
 
-func deleteIndexStockRelationship(db *sql.DB, relationshipId int) error {
-	query := `DELETE FROM index_stocks_relationship WHERE id = $1;`
+func deleteIndexAssetRelationship(db *sql.DB, relationshipId int) error {
+	query := `DELETE FROM index_assets_relationship WHERE id = $1;`
 	_, err := db.Exec(query, relationshipId)
 
 	return err
 }
 
-func getIndexStockRelationshipByIndexStockId(db *sql.DB, indexStockId int) (*dto_models.IndexStockRelationship, error) {
-	query := `SELECT id, index_stocks_id, fraction FROM index_stocks_relationship WHERE index_stocks_id = $1;`
+func getIndexAssetRelationshipByIndexAssetId(db *sql.DB, indexAssetId int) (*dto_models.IndexAssetRelationship, error) {
+	query := `SELECT id, index_assets_id, fraction FROM index_assets_relationship WHERE index_assets_id = $1;`
 
-	var relationship dto_models.IndexStockRelationship
-	err := db.QueryRow(query, indexStockId).Scan(&relationship.Id, &relationship.IndexStockId, &relationship.Fraction)
+	var relationship dto_models.IndexAssetRelationship
+	err := db.QueryRow(query, indexAssetId).Scan(&relationship.Id, &relationship.IndexAssetId, &relationship.Fraction)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -681,20 +681,20 @@ func getIndexStockRelationshipByIndexStockId(db *sql.DB, indexStockId int) (*dto
 	ADDITIONAL FUNCTIONALITY
 */
 
-func addStockToPortfolio(db *sql.DB, portfolioId, stockId, quantity int) error {
-	portfolioStock, err := createPortfolioStock(db, portfolioId, stockId)
+func addAssetToPortfolio(db *sql.DB, portfolioId, assetId, quantity int) error {
+	portfolioAsset, err := createPortfolioAsset(db, portfolioId, assetId)
 	if err != nil {
 		return err
 	}
 
-	_, err = createPortfolioStockRelationship(db, portfolioStock.Id, quantity)
+	_, err = createPortfolioAssetRelationship(db, portfolioAsset.Id, quantity)
 
 	return err
 }
 
-func addManyStocksToPortfolio(db *sql.DB, portfolioId int, stocksQuantityMap map[int]int) error {
-	for stockId, quantity := range stocksQuantityMap {
-		err := addStockToPortfolio(db, portfolioId, stockId, quantity)
+func addManyAssetsToPortfolio(db *sql.DB, portfolioId int, assetsQuantityMap map[int]int) error {
+	for assetId, quantity := range assetsQuantityMap {
+		err := addAssetToPortfolio(db, portfolioId, assetId, quantity)
 		if err != nil {
 			return err
 		}
@@ -703,42 +703,42 @@ func addManyStocksToPortfolio(db *sql.DB, portfolioId int, stocksQuantityMap map
 	return nil
 }
 
-func convertStocksNameQuantityMapToStocksIdQuantityMap(db *sql.DB, stocksQuantityMap map[string]int) (map[int]int, error) {
-	stocksIdQuantityMap := make(map[int]int)
-	for stockName, quantity := range stocksQuantityMap {
-		stockId, err := getStockIdByName(db, stockName)
+func convertAssetsNameQuantityMapToAssetsIdQuantityMap(db *sql.DB, assetsQuantityMap map[string]int) (map[int]int, error) {
+	assetsIdQuantityMap := make(map[int]int)
+	for assetName, quantity := range assetsQuantityMap {
+		assetId, err := getAssetIdByName(db, assetName)
 		if err != nil {
 			return nil, err
 		}
 
-		stocksIdQuantityMap[stockId] = quantity
+		assetsIdQuantityMap[assetId] = quantity
 	}
 
-	return stocksIdQuantityMap, nil
+	return assetsIdQuantityMap, nil
 }
 
-func addManyStocksToPortfolioByName(db *sql.DB, portfolioName string, stocksQuantityMap map[string]int) error {
+func addManyAssetsToPortfolioByName(db *sql.DB, portfolioName string, assetsQuantityMap map[string]int) error {
 	portfolioId, err := getPortfolioIdByName(db, portfolioName)
 	if err != nil {
 		return err
 	}
 
-	stocksIdQuantityMap := make(map[int]int)
-	stocksIdQuantityMap, err = convertStocksNameQuantityMapToStocksIdQuantityMap(db, stocksQuantityMap)
+	assetsIdQuantityMap := make(map[int]int)
+	assetsIdQuantityMap, err = convertAssetsNameQuantityMapToAssetsIdQuantityMap(db, assetsQuantityMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyStocksToPortfolio(db, portfolioId, stocksIdQuantityMap)
+	err = addManyAssetsToPortfolio(db, portfolioId, assetsIdQuantityMap)
 
 	return err
 }
 
-func deleteAllStocksFromPortfolio(db *sql.DB, portfolioId int) error {
+func deleteAllAssetsFromPortfolio(db *sql.DB, portfolioId int) error {
 	query := `
-        DELETE FROM portfolio_stocks_relationship
-        WHERE portfolio_stocks_id IN (
-            SELECT id FROM portfolio_stocks WHERE portfolio_id = $1
+        DELETE FROM portfolio_assets_relationship
+        WHERE portfolio_assets_id IN (
+            SELECT id FROM portfolio_assets WHERE portfolio_id = $1
         );
     `
 	_, err := db.Exec(query, portfolioId)
@@ -746,51 +746,51 @@ func deleteAllStocksFromPortfolio(db *sql.DB, portfolioId int) error {
 		return err
 	}
 
-	query = `DELETE FROM portfolio_stocks WHERE portfolio_id = $1;`
+	query = `DELETE FROM portfolio_assets WHERE portfolio_id = $1;`
 	_, err = db.Exec(query, portfolioId)
 
 	return err
 }
 
-func deleteAllStocksFromPortfolioByName(db *sql.DB, portfolioName string) error {
+func deleteAllAssetsFromPortfolioByName(db *sql.DB, portfolioName string) error {
 	portfolioId, err := getPortfolioIdByName(db, portfolioName)
 	if err != nil {
 		return err
 	}
 
-	err = deleteAllStocksFromPortfolio(db, portfolioId)
+	err = deleteAllAssetsFromPortfolio(db, portfolioId)
 
 	return err
 }
 
-func convertStocksQuantityMapToStocksIdQuantityMap(db *sql.DB, stocksQuantityMap map[*models.Stock]int) (map[int]int, error) {
-	stocksNameQuantityMap := make(map[string]int)
-	for stock, quantity := range stocksQuantityMap {
-		stocksNameQuantityMap[stock.Name] = quantity
+func convertAssetsQuantityMapToAssetsIdQuantityMap(db *sql.DB, assetsQuantityMap map[*models.Asset]int) (map[int]int, error) {
+	assetsNameQuantityMap := make(map[string]int)
+	for asset, quantity := range assetsQuantityMap {
+		assetsNameQuantityMap[asset.Name] = quantity
 	}
 
-	stocksIdQuantityMap, err := convertStocksNameQuantityMapToStocksIdQuantityMap(db, stocksNameQuantityMap)
+	assetsIdQuantityMap, err := convertAssetsNameQuantityMapToAssetsIdQuantityMap(db, assetsNameQuantityMap)
 	if err != nil {
 		return nil, err
 	}
 
-	return stocksIdQuantityMap, nil
+	return assetsIdQuantityMap, nil
 }
 
-func addStockToIndex(db *sql.DB, indexId int, stockId int, fraction float64) error {
-	indexStock, err := createIndexStock(db, indexId, stockId)
+func addAssetToIndex(db *sql.DB, indexId int, assetId int, fraction float64) error {
+	indexAsset, err := createIndexAsset(db, indexId, assetId)
 	if err != nil {
 		return err
 	}
 
-	_, err = createIndexStockRelationship(db, indexStock.Id, fraction)
+	_, err = createIndexAssetRelationship(db, indexAsset.Id, fraction)
 
 	return err
 }
 
-func addManyStocksToIndex(db *sql.DB, indexId int, stocksFractionMap map[int]float64) error {
-	for stockId, fraction := range stocksFractionMap {
-		err := addStockToIndex(db, indexId, stockId, fraction)
+func addManyAssetsToIndex(db *sql.DB, indexId int, assetsFractionMap map[int]float64) error {
+	for assetId, fraction := range assetsFractionMap {
+		err := addAssetToIndex(db, indexId, assetId, fraction)
 		if err != nil {
 			return err
 		}
@@ -799,25 +799,25 @@ func addManyStocksToIndex(db *sql.DB, indexId int, stocksFractionMap map[int]flo
 	return nil
 }
 
-func convertStocksNameFractionMapToStocksIdFractionMap(db *sql.DB, stocksFractionMap map[string]float64) (map[int]float64, error) {
-	stocksIdFractionMap := make(map[int]float64)
-	for stockName, fraction := range stocksFractionMap {
-		stockId, err := getStockIdByName(db, stockName)
+func convertAssetsNameFractionMapToAssetsIdFractionMap(db *sql.DB, assetsFractionMap map[string]float64) (map[int]float64, error) {
+	assetsIdFractionMap := make(map[int]float64)
+	for assetName, fraction := range assetsFractionMap {
+		assetId, err := getAssetIdByName(db, assetName)
 		if err != nil {
 			return nil, err
 		}
 
-		stocksIdFractionMap[stockId] = fraction
+		assetsIdFractionMap[assetId] = fraction
 	}
 
-	return stocksIdFractionMap, nil
+	return assetsIdFractionMap, nil
 }
 
-func deleteAllStocksFromIndex(db *sql.DB, indexId int) error {
+func deleteAllAssetsFromIndex(db *sql.DB, indexId int) error {
 	query := `
-        DELETE FROM index_stocks_relationship
-        WHERE index_stocks_id IN (
-            SELECT id FROM index_stocks WHERE index_id = $1
+        DELETE FROM index_assets_relationship
+        WHERE index_assets_id IN (
+            SELECT id FROM index_assets WHERE index_id = $1
         );
     `
 	_, err := db.Exec(query, indexId)
@@ -825,22 +825,22 @@ func deleteAllStocksFromIndex(db *sql.DB, indexId int) error {
 		return err
 	}
 
-	query = `DELETE FROM index_stocks WHERE index_id = $1;`
+	query = `DELETE FROM index_assets WHERE index_id = $1;`
 	_, err = db.Exec(query, indexId)
 
 	return err
 }
 
-func convertStocksFractionMapToStocksIdFractionMap(db *sql.DB, stocksFractionMap map[*models.Stock]float64) (map[int]float64, error) {
-	stocksNameFractionMap := make(map[string]float64)
-	for stock, quantity := range stocksFractionMap {
-		stocksNameFractionMap[stock.Name] = quantity
+func convertAssetsFractionMapToAssetsIdFractionMap(db *sql.DB, assetsFractionMap map[*models.Asset]float64) (map[int]float64, error) {
+	assetsNameFractionMap := make(map[string]float64)
+	for asset, quantity := range assetsFractionMap {
+		assetsNameFractionMap[asset.Name] = quantity
 	}
 
-	stocksIDFractionMap, err := convertStocksNameFractionMapToStocksIdFractionMap(db, stocksNameFractionMap)
+	assetsIDFractionMap, err := convertAssetsNameFractionMapToAssetsIdFractionMap(db, assetsNameFractionMap)
 	if err != nil {
 		return nil, err
 	}
 
-	return stocksIDFractionMap, nil
+	return assetsIDFractionMap, nil
 }

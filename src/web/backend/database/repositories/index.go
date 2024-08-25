@@ -3,8 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/dto_models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/dto_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 )
 
 type IndexRepository interface {
@@ -38,17 +38,17 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 	if err != nil {
 		return err
 	}
-	if index.StocksFractionMap == nil {
+	if index.AssetsFractionMap == nil {
 		return nil
 	}
 
-	stocksIdQuantityMap := make(map[int]float64)
-	stocksIdQuantityMap, err = convertStocksFractionMapToStocksIdFractionMap(p.db, index.StocksFractionMap)
+	assetsIdQuantityMap := make(map[int]float64)
+	assetsIdQuantityMap, err = convertAssetsFractionMapToAssetsIdFractionMap(p.db, index.AssetsFractionMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyStocksToIndex(p.db, createdIndex.Id, stocksIdQuantityMap)
+	err = addManyAssetsToIndex(p.db, createdIndex.Id, assetsIdQuantityMap)
 
 	return err
 }
@@ -62,25 +62,25 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, nil
 	}
 
-	var indexStocks []*dto_models.IndexStock
-	indexStocks, err = getAllIndexStocksByIndexId(p.db, indexId)
+	var indexAssets []*dto_models.IndexAsset
+	indexAssets, err = getAllIndexAssetsByIndexId(p.db, indexId)
 	if err != nil {
 		return nil, err
 	}
 
-	stocksFractionMap := make(map[*models.Stock]float64)
-	var stock *dto_models.Stock
-	var relationship *dto_models.IndexStockRelationship
-	for _, indexStock := range indexStocks {
-		stock, err = getStock(p.db, indexStock.StockId)
+	assetsFractionMap := make(map[*models.Asset]float64)
+	var asset *dto_models.Asset
+	var relationship *dto_models.IndexAssetRelationship
+	for _, indexAsset := range indexAssets {
+		asset, err = getAsset(p.db, indexAsset.AssetId)
 		if err != nil {
 			return nil, err
 		}
-		if stock == nil {
-			return nil, errors.New("stock not found")
+		if asset == nil {
+			return nil, errors.New("asset not found")
 		}
 
-		relationship, err = getIndexStockRelationshipByIndexStockId(p.db, indexStock.Id)
+		relationship, err = getIndexAssetRelationshipByIndexAssetId(p.db, indexAsset.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -88,17 +88,17 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 			return nil, errors.New("relationship not found")
 		}
 
-		newStock := models.Stock{
-			Name:  stock.Name,
-			Price: stock.Price,
+		newAsset := models.Asset{
+			Name:  asset.Name,
+			Price: asset.Price,
 		}
 
-		stocksFractionMap[&newStock] = relationship.Fraction
+		assetsFractionMap[&newAsset] = relationship.Fraction
 	}
 
 	return &models.Index{
 		Name:              name,
-		StocksFractionMap: stocksFractionMap,
+		AssetsFractionMap: assetsFractionMap,
 	}, nil
 }
 
@@ -111,18 +111,18 @@ func (p *PostgresIndexRepository) Update(index *models.Index) error {
 		return errors.New("index not found")
 	}
 
-	err = deleteAllStocksFromIndex(p.db, indexId)
+	err = deleteAllAssetsFromIndex(p.db, indexId)
 	if err != nil {
 		return err
 	}
 
-	stocksIdFractionMap := make(map[int]float64)
-	stocksIdFractionMap, err = convertStocksFractionMapToStocksIdFractionMap(p.db, index.StocksFractionMap)
+	assetsIdFractionMap := make(map[int]float64)
+	assetsIdFractionMap, err = convertAssetsFractionMapToAssetsIdFractionMap(p.db, index.AssetsFractionMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyStocksToIndex(p.db, indexId, stocksIdFractionMap)
+	err = addManyAssetsToIndex(p.db, indexId, assetsIdFractionMap)
 
 	return err
 }
@@ -136,7 +136,7 @@ func (p *PostgresIndexRepository) Delete(index *models.Index) error {
 		return errors.New("index not found")
 	}
 
-	err = deleteAllStocksFromIndex(p.db, indexId)
+	err = deleteAllAssetsFromIndex(p.db, indexId)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (p *PostgresIndexRepository) Delete(index *models.Index) error {
 }
 
 func (p *PostgresIndexRepository) DeleteByName(name string) error {
-	return p.Delete(&models.Index{Name: name, StocksFractionMap: nil})
+	return p.Delete(&models.Index{Name: name, AssetsFractionMap: nil})
 }
 
 func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
@@ -169,7 +169,7 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 
 		newIndex := &models.Index{
 			Name:              index.Name,
-			StocksFractionMap: index.StocksFractionMap,
+			AssetsFractionMap: index.AssetsFractionMap,
 		}
 
 		indexes = append(indexes, newIndex)

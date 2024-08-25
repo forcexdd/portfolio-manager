@@ -77,53 +77,53 @@ func getAllTables() map[string]string {
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(64) NOT NULL UNIQUE
 		);`,
-		"stocks": `
-		CREATE TABLE IF NOT EXISTS stocks (
+		"assets": `
+		CREATE TABLE IF NOT EXISTS assets (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(5) NOT NULL UNIQUE,
 			price DECIMAL(32, 15) NOT NULL
 		);`,
-		"portfolio_stocks": `
-		CREATE TABLE IF NOT EXISTS portfolio_stocks (
+		"portfolio_assets": `
+		CREATE TABLE IF NOT EXISTS portfolio_assets (
 			id SERIAL PRIMARY KEY,
 			portfolio_id INT NOT NULL,
-			stock_id INT NOT NULL,
+			asset_id INT NOT NULL,
 			FOREIGN KEY (portfolio_id) REFERENCES portfolios(id),
-			FOREIGN KEY (stock_id) REFERENCES stocks(id)
+			FOREIGN KEY (asset_id) REFERENCES assets(id)
 		);`,
-		"portfolio_stocks_relationship": `
-		CREATE TABLE IF NOT EXISTS portfolio_stocks_relationship (
+		"portfolio_assets_relationship": `
+		CREATE TABLE IF NOT EXISTS portfolio_assets_relationship (
 			id SERIAL PRIMARY KEY,
 			quantity INT NOT NULL,
-			portfolio_stocks_id INT NOT NULL,
-			FOREIGN KEY (portfolio_stocks_id) REFERENCES portfolio_stocks(id)
+			portfolio_assets_id INT NOT NULL,
+			FOREIGN KEY (portfolio_assets_id) REFERENCES portfolio_assets(id)
 		);`,
 		"indexes": `
 		CREATE TABLE IF NOT EXISTS indexes (
 			id SERIAL PRIMARY KEY,
 			name VARCHAR(64) NOT NULL UNIQUE
 		);`,
-		"index_stocks": `
-		CREATE TABLE IF NOT EXISTS index_stocks (
+		"index_assets": `
+		CREATE TABLE IF NOT EXISTS index_assets (
 			id SERIAL PRIMARY KEY,
 			index_id INT NOT NULL,
-			stock_id INT NOT NULL,
+			asset_id INT NOT NULL,
 			FOREIGN KEY (index_id) REFERENCES indexes(id),
-			FOREIGN KEY (stock_id) REFERENCES stocks(id)
+			FOREIGN KEY (asset_id) REFERENCES assets(id)
 		);`,
-		"index_stocks_relationship": `
-		CREATE TABLE IF NOT EXISTS index_stocks_relationship (
+		"index_assets_relationship": `
+		CREATE TABLE IF NOT EXISTS index_assets_relationship (
 			id SERIAL PRIMARY KEY,
 			fraction DECIMAL(17, 15) NOT NULL,
-			index_stocks_id INT NOT NULL,
-			FOREIGN KEY (index_stocks_id) REFERENCES index_stocks(id)
+			index_assets_id INT NOT NULL,
+			FOREIGN KEY (index_assets_id) REFERENCES index_assets(id)
 		);`,
 	}
 }
 
 // Returns an order in which tables must be created
 func getTablesOrder() []string {
-	return []string{"portfolios", "stocks", "portfolio_stocks", "portfolio_stocks_relationship", "indexes", "index_stocks", "index_stocks_relationship"}
+	return []string{"portfolios", "assets", "portfolio_assets", "portfolio_assets_relationship", "indexes", "index_assets", "index_assets_relationship"}
 }
 
 func (s *Storage) dropAllTables() error {

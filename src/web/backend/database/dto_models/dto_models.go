@@ -5,21 +5,21 @@ type Portfolio struct {
 	Name string
 }
 
-type Stock struct {
+type Asset struct {
 	Id    int // PK
 	Name  string
 	Price float64
 }
 
-type PortfolioStock struct {
+type PortfolioAsset struct {
 	Id          int // PK
 	PortfolioId int // FK
-	StockId     int // FK
+	AssetId     int // FK
 }
 
-type PortfolioStockRelationship struct {
+type PortfolioAssetRelationship struct {
 	Id               int // PK
-	PortfolioStockId int // FK
+	PortfolioAssetId int // FK
 	Quantity         int
 }
 
@@ -28,14 +28,14 @@ type Index struct {
 	Name string
 }
 
-type IndexStock struct {
+type IndexAsset struct {
 	Id      int // PK
 	IndexId int // FK
-	StockId int // FK
+	AssetId int // FK
 }
 
-type IndexStockRelationship struct {
+type IndexAssetRelationship struct {
 	Id           int // PK
-	IndexStockId int // FK
+	IndexAssetId int // FK
 	Fraction     float64
 }

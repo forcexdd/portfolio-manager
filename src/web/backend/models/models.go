@@ -2,15 +2,15 @@ package models
 
 type Portfolio struct {
 	Name              string
-	StocksQuantityMap map[*Stock]int
+	AssetsQuantityMap map[*Asset]int
 }
 
-type Stock struct {
+type Asset struct {
 	Name  string
 	Price float64
 }
 
 type Index struct {
 	Name              string
-	StocksFractionMap map[*Stock]float64
+	AssetsFractionMap map[*Asset]float64
 }

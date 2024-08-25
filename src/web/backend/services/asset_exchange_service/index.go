@@ -1,23 +1,23 @@
-package stock_exchange_service
+package asset_exchange_service
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
 )
 
-func (m *MoexService) parseLatestIndexStocks(index *moex_models.IndexData, maxDays int) ([]*moex_models.IndexStocksData, error) {
+func (m *MoexService) parseLatestIndexAssets(index *moex_models.IndexData, maxDays int) ([]*moex_models.IndexAssetsData, error) {
 	parseTime := getCurrentTime()
 
-	allIndexStocks, err := m.moexApiClient.GetAllIndexStocks(formatTime(parseTime), index)
+	allIndexAssets, err := m.moexApiClient.GetAllIndexAssets(formatTime(parseTime), index)
 	if err != nil {
 		return nil, err
 	}
 	maxDays--
 
-	for len(allIndexStocks) == 0 && maxDays != 0 {
+	for len(allIndexAssets) == 0 && maxDays != 0 {
 		parseTime = parseTime.AddDate(0, 0, -1)
 
-		allIndexStocks, err = m.moexApiClient.GetAllIndexStocks(formatTime(parseTime), index)
+		allIndexAssets, err = m.moexApiClient.GetAllIndexAssets(formatTime(parseTime), index)
 		if err != nil {
 			return nil, err
 		}
@@ -25,7 +25,7 @@ func (m *MoexService) parseLatestIndexStocks(index *moex_models.IndexData, maxDa
 		maxDays--
 	}
 
-	return allIndexStocks, nil
+	return allIndexAssets, nil
 }
 
 func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
@@ -48,18 +48,18 @@ func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
 	return nil
 }
 
-func (m *MoexService) createStocksFractionMapFromIndexStocks(indexStocks []*moex_models.IndexStocksData) (map[*models.Stock]float64, error) {
-	newStocksFractionMap := make(map[*models.Stock]float64)
-	for _, indexStock := range indexStocks {
-		stock, err := m.StockRepository.GetByName(indexStock.SecIds)
+func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moex_models.IndexAssetsData) (map[*models.Asset]float64, error) {
+	newAssetsFractionMap := make(map[*models.Asset]float64)
+	for _, indexAsset := range indexAssets {
+		asset, err := m.AssetRepository.GetByName(indexAsset.SecIds)
 		if err != nil {
 			return nil, err
 		}
 
-		newStocksFractionMap[stock] = indexStock.Weight
+		newAssetsFractionMap[asset] = indexAsset.Weight
 	}
 
-	return newStocksFractionMap, nil
+	return newAssetsFractionMap, nil
 }
 
 func removeIndexByNameFromSlice(indexes []*models.Index, name string) []*models.Index {

@@ -3,8 +3,8 @@ package repositories
 import (
 	"database/sql"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/dto_models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/dto_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 )
 
 type PortfolioRepository interface {
@@ -37,17 +37,17 @@ func (p *PostgresPortfolioRepository) Create(portfolio *models.Portfolio) error 
 	if err != nil {
 		return err
 	}
-	if portfolio.StocksQuantityMap == nil {
+	if portfolio.AssetsQuantityMap == nil {
 		return nil
 	}
 
-	stocksIdQuantityMap := make(map[int]int)
-	stocksIdQuantityMap, err = convertStocksQuantityMapToStocksIdQuantityMap(p.db, portfolio.StocksQuantityMap)
+	assetsIdQuantityMap := make(map[int]int)
+	assetsIdQuantityMap, err = convertAssetsQuantityMapToAssetsIdQuantityMap(p.db, portfolio.AssetsQuantityMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyStocksToPortfolio(p.db, createdPortfolio.Id, stocksIdQuantityMap)
+	err = addManyAssetsToPortfolio(p.db, createdPortfolio.Id, assetsIdQuantityMap)
 
 	return err
 }
@@ -61,25 +61,25 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 		return nil, nil
 	}
 
-	var portfolioStocks []*dto_models.PortfolioStock
-	portfolioStocks, err = getAllPortfolioStocksByPortfolioId(p.db, portfolioId)
+	var portfolioAssets []*dto_models.PortfolioAsset
+	portfolioAssets, err = getAllPortfolioAssetsByPortfolioId(p.db, portfolioId)
 	if err != nil {
 		return nil, err
 	}
 
-	stocksQuantityMap := make(map[*models.Stock]int)
-	var stock *dto_models.Stock
-	var relationship *dto_models.PortfolioStockRelationship
-	for _, portfolioStock := range portfolioStocks {
-		stock, err = getStock(p.db, portfolioStock.StockId)
+	assetsQuantityMap := make(map[*models.Asset]int)
+	var asset *dto_models.Asset
+	var relationship *dto_models.PortfolioAssetRelationship
+	for _, portfolioAsset := range portfolioAssets {
+		asset, err = getAsset(p.db, portfolioAsset.AssetId)
 		if err != nil {
 			return nil, err
 		}
-		if stock == nil {
-			return nil, errors.New("stock not found")
+		if asset == nil {
+			return nil, errors.New("asset not found")
 		}
 
-		relationship, err = getPortfolioStockRelationshipByPortfolioStockId(p.db, portfolioStock.Id)
+		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetId(p.db, portfolioAsset.Id)
 		if err != nil {
 			return nil, err
 		}
@@ -87,17 +87,17 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*models.Portfolio,
 			return nil, errors.New("relationship not found")
 		}
 
-		newStock := models.Stock{
-			Name:  stock.Name,
-			Price: stock.Price,
+		newAsset := models.Asset{
+			Name:  asset.Name,
+			Price: asset.Price,
 		}
 
-		stocksQuantityMap[&newStock] = relationship.Quantity
+		assetsQuantityMap[&newAsset] = relationship.Quantity
 	}
 
 	return &models.Portfolio{
 		Name:              name,
-		StocksQuantityMap: stocksQuantityMap,
+		AssetsQuantityMap: assetsQuantityMap,
 	}, nil
 }
 
@@ -110,18 +110,18 @@ func (p *PostgresPortfolioRepository) Update(portfolio *models.Portfolio) error 
 		return errors.New("portfolio not found")
 	}
 
-	err = deleteAllStocksFromPortfolio(p.db, portfolioId)
+	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
 	if err != nil {
 		return err
 	}
 
-	stocksIdQuantityMap := make(map[int]int)
-	stocksIdQuantityMap, err = convertStocksQuantityMapToStocksIdQuantityMap(p.db, portfolio.StocksQuantityMap)
+	assetsIdQuantityMap := make(map[int]int)
+	assetsIdQuantityMap, err = convertAssetsQuantityMapToAssetsIdQuantityMap(p.db, portfolio.AssetsQuantityMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyStocksToPortfolio(p.db, portfolioId, stocksIdQuantityMap)
+	err = addManyAssetsToPortfolio(p.db, portfolioId, assetsIdQuantityMap)
 
 	return err
 }
@@ -135,7 +135,7 @@ func (p *PostgresPortfolioRepository) Delete(portfolio *models.Portfolio) error 
 		return errors.New("portfolio not found")
 	}
 
-	err = deleteAllStocksFromPortfolio(p.db, portfolioId)
+	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (p *PostgresPortfolioRepository) Delete(portfolio *models.Portfolio) error 
 }
 
 func (p *PostgresPortfolioRepository) DeleteByName(name string) error {
-	return p.Delete(&models.Portfolio{Name: name, StocksQuantityMap: nil})
+	return p.Delete(&models.Portfolio{Name: name, AssetsQuantityMap: nil})
 }
 
 func (p *PostgresPortfolioRepository) GetAll() ([]*models.Portfolio, error) {
@@ -165,7 +165,7 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*models.Portfolio, error) {
 
 		newPortfolio := &models.Portfolio{
 			Name:              portfolio.Name,
-			StocksQuantityMap: portfolio.StocksQuantityMap,
+			AssetsQuantityMap: portfolio.AssetsQuantityMap,
 		}
 
 		portfolios = append(portfolios, newPortfolio)

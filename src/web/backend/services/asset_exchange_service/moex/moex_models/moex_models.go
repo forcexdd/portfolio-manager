@@ -1,6 +1,6 @@
 package moex_models
 
-type StockData struct {
+type AssetData struct {
 	TradeDate      string
 	BoardId        string
 	SecId          string
@@ -26,7 +26,7 @@ type AnalyticsData struct {
 	Data [][]interface{}
 }
 
-type IndexStocksData struct {
+type IndexAssetsData struct {
 	IndexId        string
 	TradeDate      string
 	Ticker         string

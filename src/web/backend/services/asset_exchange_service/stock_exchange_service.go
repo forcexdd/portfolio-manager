@@ -1,27 +1,27 @@
-package stock_exchange_service
+package asset_exchange_service
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_api_client"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_api_client"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
 	"time"
 )
 
-type StockExchangeService interface {
-	ParseAllStocksIntoDb() error
+type AssetExchangeService interface {
+	ParseAllAssetsIntoDb() error
 	ParseAllIndexesIntoDb() error
 }
 
 type MoexService struct {
-	StockRepository repositories.StockRepository
+	AssetRepository repositories.AssetRepository
 	IndexRepository repositories.IndexRepository
 	moexApiClient   *moex_api_client.MoexApiClient
 }
 
-func NewStockExchangeService(stockRepository repositories.StockRepository, indexRepository repositories.IndexRepository) StockExchangeService {
+func NewAssetExchangeService(assetRepository repositories.AssetRepository, indexRepository repositories.IndexRepository) AssetExchangeService {
 	newService := &MoexService{
-		StockRepository: stockRepository,
+		AssetRepository: assetRepository,
 		IndexRepository: indexRepository,
 	}
 	newService.setApiClient()
@@ -29,34 +29,34 @@ func NewStockExchangeService(stockRepository repositories.StockRepository, index
 	return newService
 }
 
-func (m *MoexService) ParseAllStocksIntoDb() error {
-	allStocks, err := m.parseLatestStocks(getMaxDaysBeforeLatestDate())
+func (m *MoexService) ParseAllAssetsIntoDb() error {
+	allAssets, err := m.parseLatestAssets(getMaxDaysBeforeLatestDate())
 	if err != nil {
 		return err
 	}
 
-	var allStocksInDb []*models.Stock
-	allStocksInDb, err = m.StockRepository.GetAll()
+	var allAssetsInDb []*models.Asset
+	allAssetsInDb, err = m.AssetRepository.GetAll()
 	if err != nil {
 		return err
 	}
 
-	for _, stock := range allStocks {
-		newStock := &models.Stock{
-			Name:  stock.SecId,
-			Price: stock.CurPrice,
+	for _, asset := range allAssets {
+		newAsset := &models.Asset{
+			Name:  asset.SecId,
+			Price: asset.CurPrice,
 		}
 
-		err = m.createOrUpdateStock(newStock)
+		err = m.createOrUpdateAsset(newAsset)
 		if err != nil {
 			return err
 		}
 
-		allStocksInDb = removeStockByNameFromSlice(allStocksInDb, newStock.Name)
+		allAssetsInDb = removeAssetByNameFromSlice(allAssetsInDb, newAsset.Name)
 	}
 
-	if len(allStocksInDb) > 0 {
-		err = m.removeOldStocksFromDb(allStocksInDb)
+	if len(allAssetsInDb) > 0 {
+		err = m.removeOldAssetsFromDb(allAssetsInDb)
 		if err != nil {
 			return err
 		}
@@ -78,24 +78,24 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 	}
 
 	for _, index := range allIndexes {
-		var indexStocks []*moex_models.IndexStocksData
-		indexStocks, err = m.parseLatestIndexStocks(index, getMaxDaysBeforeLatestDate())
+		var indexAssets []*moex_models.IndexAssetsData
+		indexAssets, err = m.parseLatestIndexAssets(index, getMaxDaysBeforeLatestDate())
 		if err != nil {
 			return err
 		}
-		if indexStocks == nil {
+		if indexAssets == nil {
 			continue // Index contains bonds OR it's weekend (you can access index names but not its stocks)
 		}
 
-		newStocksFractionMap := make(map[*models.Stock]float64)
-		newStocksFractionMap, err = m.createStocksFractionMapFromIndexStocks(indexStocks)
+		newAssetsFractionMap := make(map[*models.Asset]float64)
+		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
 			return err
 		}
 
 		newIndex := &models.Index{
 			Name:              index.IndexId,
-			StocksFractionMap: newStocksFractionMap,
+			AssetsFractionMap: newAssetsFractionMap,
 		}
 
 		err = m.createOrUpdateIndex(newIndex)

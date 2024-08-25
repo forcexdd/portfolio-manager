@@ -3,7 +3,7 @@ package moex_api_client
 import (
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
 	"io"
 	"net/http"
 )
