@@ -6,7 +6,7 @@ Choose Portfolio
 
 {{define "main"}}
 <link rel="stylesheet" href="../static/portfolioCreatorForm.css" type="text/css">
-<form class="row">
+<form class="row" id="selectStocksForm" method="post">
     <label>
         Name:
         <input type="text" id="portfolioNameInput" placeholder="Portfolio Name"/>
@@ -44,7 +44,7 @@ Choose Portfolio
             <tbody id="chosenListTbody"></tbody>
         </table>
     </div>
-    <button type="submit" id="submitButton">Submit</button>
+    <button type="button" id="submitButton">Submit</button>
 </form>
 <script src="../static/portfolioCreatorForm.js" ></script>
 <script src="../static/portfolioCreatorValidators.js" ></script>

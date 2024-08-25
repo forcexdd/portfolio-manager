@@ -23,7 +23,7 @@ function chooseRightSection(optionsHTML) {
     }
 
     let endpoint = getFirstEndpoint();
-
+    
     switch (endpoint)
     {
         case "manager":
@@ -31,6 +31,9 @@ function chooseRightSection(optionsHTML) {
             break;
         case "following_index":
             optionsHTML.value = "following_index";
+            break;
+        case "add_portfolio":
+            optionsHTML.value = "add_portfolio";
             break;
     }
 }

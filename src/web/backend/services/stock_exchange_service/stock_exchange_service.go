@@ -30,7 +30,7 @@ func NewStockExchangeService(stockRepository repositories.StockRepository, index
 }
 
 func (m *MoexService) ParseAllStocksIntoDb() error {
-	allStocks, err := m.moexApiClient.GetAllStocks(getCurrentTime()) // !!! TODO
+	allStocks, err := m.moexApiClient.GetAllStocks("2023-08-23") // !!! TODO
 	if err != nil {
 		return err
 	}

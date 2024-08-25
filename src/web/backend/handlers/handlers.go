@@ -2,16 +2,29 @@ package handlers
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"text/template"
 )
 
-func HandleStaticFiles(w http.ResponseWriter, r *http.Request) {
-	ext := filepath.Ext(r.URL.Path)
+type RouteHandler struct {
+	portfolioRepository repositories.PortfolioRepository
+	stocksRepository    repositories.StockRepository
+}
+
+func NewRouteHandler(p repositories.PortfolioRepository, s repositories.StockRepository) *RouteHandler {
+	return &RouteHandler{portfolioRepository: p, stocksRepository: s}
+}
+
+func (r *RouteHandler) HandleStaticFiles(w http.ResponseWriter, request *http.Request) {
+	ext := filepath.Ext(request.URL.Path)
 	switch ext {
 	case ".js":
 		w.Header().Set("Content-Type", "application/javascript")
@@ -21,9 +34,9 @@ func HandleStaticFiles(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
 	}
 
-	http.ServeFile(w, r, "src/web/frontend"+r.URL.Path)
+	http.ServeFile(w, request, "src/web/frontend"+request.URL.Path)
 }
-func HandleHome(w http.ResponseWriter, r *http.Request) {
+func (r *RouteHandler) HandleHome(w http.ResponseWriter, _ *http.Request) {
 
 	files := []string{
 		"./src/web/frontend/templates/home.page.tmpl",
@@ -37,57 +50,117 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	portfolios := []models.Portfolio{
-		{"testFirst"},
-		{"testSecond"},
-	}
-
-	data := make(map[string]interface{})
-	data["portfolios"] = portfolios
-	err = templates.Execute(w, data)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func getData() map[string]interface{} {
-	portfolios := []models.Portfolio{
-		{"testFirst"},
-		{"testSecond"},
-	}
-
-	stocks := []models.Stock{
-		{"AFLT", 13, 763.03},
-		{"GAZP", 130, 21363.00},
-	}
-
-	data := make(map[string]interface{})
-	data["stocks"] = stocks
-	data["portfolios"] = portfolios
-
-	return data
-}
-
-func HandleAddPortfolio(w http.ResponseWriter, r *http.Request) {
-	files := []string{
-		"./src/web/frontend/templates/portfolio_creator.page.tmpl",
-		"./src/web/frontend/templates/navbar.tmpl",
-		"./src/web/frontend/templates/base.page.tmpl",
-	}
-
-	templates, err := template.ParseFiles(files...)
+	portfolios, err := r.portfolioRepository.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	data := getData()
+	data := make(map[string]interface{})
+	data["portfolios"] = portfolios
 
 	err = templates.Execute(w, data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	return
+}
+
+func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case "GET":
+		files := []string{
+			"./src/web/frontend/templates/portfolio_creator.page.tmpl",
+			"./src/web/frontend/templates/navbar.tmpl",
+			"./src/web/frontend/templates/base.page.tmpl",
+		}
+
+		templates, err := template.ParseFiles(files...)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		portfolios, err := r.portfolioRepository.GetAll()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		stocks, err := r.stocksRepository.GetAll()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data := make(map[string]interface{})
+		data["portfolios"] = portfolios
+		data["stocks"] = stocks
+
+		err = templates.Execute(w, data)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+
+	case "POST":
+		err := request.ParseMultipartForm(-1) // we can use -1 for a no memory limit ???
+		if err != nil {
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			return
+		}
+
+		portfolioName := request.FormValue("portfolioName")
+		stocks := request.MultipartForm.Value["stocks[]"]
+
+		_, err = r.portfolioRepository.GetByName(portfolioName)
+		if err == nil {
+			http.Error(w, "Some portfolio already has this name! Use another one", http.StatusConflict)
+			return
+		}
+
+		type myStock struct {
+			Name     string `json:"name"`
+			Quantity string `json:"quantity"`
+		}
+
+		curStock := myStock{}
+
+		stocksMap := make(map[*models.Stock]int)
+		for _, stock := range stocks {
+			err = json.Unmarshal([]byte(stock), &curStock)
+			if err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+
+			stockFromDb, err := r.stocksRepository.GetByName(curStock.Name)
+			if err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+
+			num, err := strconv.Atoi(curStock.Quantity)
+			if err != nil {
+				http.Error(w, "Internal error", http.StatusInternalServerError)
+				return
+			}
+			stocksMap[stockFromDb] = num
+		}
+
+		portfolio := &models.Portfolio{
+			Name:              portfolioName,
+			StocksQuantityMap: stocksMap,
+		}
+
+		err = r.portfolioRepository.Create(portfolio)
+		if err != nil {
+			http.Error(w, "Internal error", http.StatusInternalServerError)
+			return
+		}
+
+		fmt.Println("Added")
+	}
+
 }
 
 func handleNoPortfolioChosen(w http.ResponseWriter, _ *http.Request, data map[string]interface{}) {
@@ -110,27 +183,39 @@ func handleNoPortfolioChosen(w http.ResponseWriter, _ *http.Request, data map[st
 	return
 }
 
-func HandleManager(w http.ResponseWriter, r *http.Request) {
-	stocks := []models.Stock{
-		{"AFLT", 13, 763.03},
-		{"GAZP", 130, 21363.00},
+func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Request) {
+	//stocks := []models.Stock{ // Get from db
+	//	{"AFLT", 13, 763.03},
+	//	{"GAZP", 130, 21363.00},
+	//}
+
+	portfolios, err := r.portfolioRepository.GetAll()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
-
-	cookie, err := r.Cookie("current_portfolio")
+	cookie, err := request.Cookie("current_portfolio")
 	if (err != nil) && (!errors.Is(err, http.ErrNoCookie)) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	data := getData()
+	data := make(map[string]interface{})
+	data["portfolios"] = portfolios
 
 	if cookie == nil || cookie.Value == "" || errors.Is(err, http.ErrNoCookie) {
-		handleNoPortfolioChosen(w, r, data)
+		handleNoPortfolioChosen(w, request, data)
 		return
 	}
 
-	pieChart, err := services.GetStockPieChart(stocks)
+	portfolio, err := r.portfolioRepository.GetByName(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	pieChart, err := services.GetStockPieChart(portfolio)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

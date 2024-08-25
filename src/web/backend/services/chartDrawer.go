@@ -5,12 +5,12 @@ import (
 	"github.com/vicanso/go-charts"
 )
 
-func GetStockPieChart(stocks []models.Stock) ([]byte, error) {
+func GetStockPieChart(portfolio *models.Portfolio) ([]byte, error) {
 	var values []float64
 	var names []string
 
-	for _, stock := range stocks {
-		values = append(values, float64(stock.Quantity))
+	for stock, quantity := range portfolio.StocksQuantityMap {
+		values = append(values, float64(quantity))
 		names = append(names, stock.Name)
 	}
 	pieChart, err := charts.PieRender(

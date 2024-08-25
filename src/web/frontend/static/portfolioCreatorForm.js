@@ -85,8 +85,9 @@ function validPortfolioName(string) {
 }
 
 submitButtonHTML.onclick = async (e) => {
+    let formHtml = document.getElementById("selectStocksForm");
+
     e.preventDefault();
-    console.log(portfolioNameHTML.value);
     if (!validPortfolioName(portfolioNameHTML.value)) {
         alert("invalid name");
         return;
@@ -98,19 +99,25 @@ submitButtonHTML.onclick = async (e) => {
         return;
     }
 
-    const formData = new FormData();
-
+    let formData = new FormData();
     formData.append("portfolioName", portfolioNameHTML.value);
-    stocks.forEach((obj) => {
-        formData.append(obj.name, obj.quantity);
-    })
+    stocks.forEach(stock => {
+        formData.append("stocks[]", JSON.stringify(stock));
+    });
 
     try {
-        const response = await fetch("/add_portfolio", {
+        let response = await fetch("/add_portfolio", {
             method: "POST",
-            body: formData,
-        })
-    } catch (e) {
-        console.error(e);
+            body: formData
+        });
+
+        if (response.ok) {
+            console.log("Form submitted successfully");
+        } else if (response.status === 409) {
+            alert("This name is already taken");
+            console.error("Form submission failed");
+        }
+    } catch (error) {
+        console.error("Error submitting form:", error);
     }
 };

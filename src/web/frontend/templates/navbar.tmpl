@@ -4,6 +4,7 @@
     <select aria-label="options" id="options">
         <option value="following_index">Following Index</option>
         <option value="manager">Manager</option>
+        <option value="add_portfolio">Add Portfolio</option>
     </select>
     <select aria-label="portfolios" id="portfolios">
         <option value="select" disabled="disabled" selected>select portfolio...</option>
@@ -11,9 +12,6 @@
         <option value={{$portfolio.Name}}> {{ $portfolio.Name }} </option>
         {{ end }}
     </select>
-    <a href="/add_portfolio">
-        <button type="button">Add Portfolio</button>
-    </a>
 </div>
 <script src="../static/navbar.js"></script>
 <script>
