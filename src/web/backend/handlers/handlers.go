@@ -216,7 +216,23 @@ func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Reques
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	type curStock struct {
+		Name     string
+		Quantity int
+		Price    float64
+	}
+
+	var stocks []*curStock
+	for stock, quantity := range portfolio.StocksQuantityMap {
+		stocks = append(stocks, &curStock{
+			Name:     stock.Name,
+			Quantity: quantity,
+			Price:    stock.Price,
+		})
+	}
+
 	data["PieChart"] = base64.StdEncoding.EncodeToString(pieChart)
+	data["stocks"] = stocks
 
 	files := []string{
 		"./src/web/frontend/templates/manager.page.tmpl",
@@ -233,5 +249,37 @@ func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Reques
 	err = templates.Execute(w, data)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+func (r *RouteHandler) HandleRemovePortfolio(w http.ResponseWriter, request *http.Request) {
+	switch request.Method {
+	case "POST":
+		err := request.ParseMultipartForm(-1) // we can use -1 for a no memory limit ???
+		if err != nil {
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			return
+		}
+
+		portfolioName := request.FormValue("portfolioName")
+		if portfolioName == "" {
+			http.Error(w, "Error! No portfolioName in query!", http.StatusBadRequest)
+			return
+		}
+
+		portfolio, err := r.portfolioRepository.GetByName(portfolioName)
+		if portfolio == nil {
+			http.Error(w, "Error! No such portfolio exists!", http.StatusBadRequest)
+			return
+		}
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		if err = r.portfolioRepository.Delete(portfolio); err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 	}
 }

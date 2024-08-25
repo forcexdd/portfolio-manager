@@ -6,6 +6,7 @@ Manager
 
 {{define "main"}}
 <div>
+    <link type="text/css" href="../static/manager.css" rel="stylesheet"/>
     <table>
         <tr>
             <th>Name</th>
@@ -20,8 +21,10 @@ Manager
         </tr>
         {{ end }}
     </table>
+    <button type="button" id="delete-portfolio">Delete Portfolio</button>
     <div>
-        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart">
+        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart" id="pieChartStocks">
     </div>
+    <script src="../static/manager.js"></script>
 </div>
 {{ end }}

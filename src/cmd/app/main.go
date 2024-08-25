@@ -29,6 +29,7 @@ func main() {
 	http.HandleFunc("/following_index", routeHandler.HandleHome)
 	http.HandleFunc("/manager", routeHandler.HandleManager)
 	http.HandleFunc("/add_portfolio", routeHandler.HandleAddPortfolio)
+	http.HandleFunc("/remove_portfolio", routeHandler.HandleRemovePortfolio)
 	if err = http.ListenAndServe("localhost:8080", nil); err != nil {
 		panic(err)
 	}
