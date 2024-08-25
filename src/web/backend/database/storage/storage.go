@@ -80,8 +80,8 @@ func getAllTables() map[string]string {
 		"assets": `
 		CREATE TABLE IF NOT EXISTS assets (
 			id SERIAL PRIMARY KEY,
-			name VARCHAR(5) NOT NULL UNIQUE,
-			price DECIMAL(32, 15) NOT NULL
+			name VARCHAR(32) NOT NULL UNIQUE,
+			price DECIMAL(32, 16) NOT NULL
 		);`,
 		"portfolio_assets": `
 		CREATE TABLE IF NOT EXISTS portfolio_assets (
@@ -114,7 +114,7 @@ func getAllTables() map[string]string {
 		"index_assets_relationship": `
 		CREATE TABLE IF NOT EXISTS index_assets_relationship (
 			id SERIAL PRIMARY KEY,
-			fraction DECIMAL(17, 15) NOT NULL,
+			fraction DECIMAL(18, 16) NOT NULL,
 			index_assets_id INT NOT NULL,
 			FOREIGN KEY (index_assets_id) REFERENCES index_assets(id)
 		);`,

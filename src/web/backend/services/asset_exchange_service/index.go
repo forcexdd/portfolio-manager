@@ -3,6 +3,7 @@ package asset_exchange_service
 import (
 	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"log"
 )
 
 func (m *MoexService) parseLatestIndexAssets(index *moex_models.IndexData, maxDays int) ([]*moex_models.IndexAssetsData, error) {
@@ -54,6 +55,9 @@ func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moex
 		asset, err := m.AssetRepository.GetByName(indexAsset.SecIds)
 		if err != nil {
 			return nil, err
+		}
+		if asset == nil {
+			log.Printf("Asset %s does not exist", indexAsset.SecIds)
 		}
 
 		newAssetsFractionMap[asset] = indexAsset.Weight

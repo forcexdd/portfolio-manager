@@ -5,6 +5,7 @@ import (
 	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_api_client"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"log"
 	"time"
 )
 
@@ -83,10 +84,8 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		if err != nil {
 			return err
 		}
-		if indexAssets == nil {
-			continue // Index contains bonds OR it's weekend (you can access index names but not its stocks)
-		}
 
+		log.Println(index)
 		newAssetsFractionMap := make(map[*models.Asset]float64)
 		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {

@@ -96,9 +96,7 @@ func parseAssetDataFromCurrentPrices(assetData *moex_models.CurrentPricesData) (
 			TradingSession: int(toFloat64(asset[7])),
 		}
 
-		if len(newAsset.SecId) <= 5 { // Since we are getting only stocks. Remove this to get bonds in addition
-			allData = append(allData, newAsset)
-		}
+		allData = append(allData, newAsset)
 	}
 
 	return allData, nil
