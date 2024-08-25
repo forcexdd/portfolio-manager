@@ -1,44 +1,33 @@
 package asset_exchange_service
 
 import (
+	"errors"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
 	"log"
+	"time"
 )
 
-func (m *MoexService) parseLatestIndexAssets(index *moex_models.IndexData, maxDays int) ([]*moex_models.IndexAssetsData, error) {
-	parseTime := getCurrentTime()
-
+func (m *MoexService) parseIndexAssets(index *moex_models.IndexData, parseTime time.Time) ([]*moex_models.IndexAssetsData, error) {
 	allIndexAssets, err := m.moexApiClient.GetAllIndexAssets(formatTime(parseTime), index)
 	if err != nil {
 		return nil, err
-	}
-	maxDays--
-
-	for len(allIndexAssets) == 0 && maxDays != 0 {
-		parseTime = parseTime.AddDate(0, 0, -1)
-
-		allIndexAssets, err = m.moexApiClient.GetAllIndexAssets(formatTime(parseTime), index)
-		if err != nil {
-			return nil, err
-		}
-
-		maxDays--
 	}
 
 	return allIndexAssets, nil
 }
 
 func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
-	dbIndex, err := m.IndexRepository.GetByName(index.Name)
+	_, err := m.IndexRepository.GetByName(index.Name)
 	if err != nil {
-		return err
-
-	} else if dbIndex == nil { // Can't find index in database
-		err = m.IndexRepository.Create(index)
-		if err != nil {
-			return err
+		if errors.Is(err, repositories.ErrIndexNotFound) { // Can't find index in database
+			err = m.IndexRepository.Create(index)
+			if err != nil {
+				return err
+			}
 		}
+		return err
 	} else { // Found already existing index in database
 		err = m.IndexRepository.Update(index)
 		if err != nil {

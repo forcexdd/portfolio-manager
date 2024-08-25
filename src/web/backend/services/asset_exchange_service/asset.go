@@ -1,16 +1,19 @@
 package asset_exchange_service
 
 import (
+	"errors"
+	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"time"
 )
 
-func (m *MoexService) parseLatestAssets(maxDays int) ([]*moex_models.AssetData, error) {
+func (m *MoexService) parseLatestAssets(maxDays int) ([]*moex_models.AssetData, time.Time, error) {
 	parseTime := getCurrentTime()
 
 	allAssets, err := m.moexApiClient.GetAllAssets(formatTime(parseTime))
 	if err != nil {
-		return nil, err
+		return nil, time.Time{}, err
 	}
 	maxDays--
 
@@ -19,25 +22,25 @@ func (m *MoexService) parseLatestAssets(maxDays int) ([]*moex_models.AssetData, 
 
 		allAssets, err = m.moexApiClient.GetAllAssets(formatTime(parseTime))
 		if err != nil {
-			return nil, err
+			return nil, time.Time{}, err
 		}
 
 		maxDays--
 	}
 
-	return allAssets, nil
+	return allAssets, parseTime, nil
 }
 
 func (m *MoexService) createOrUpdateAsset(asset *models.Asset) error {
-	dbAsset, err := m.AssetRepository.GetByName(asset.Name)
+	_, err := m.AssetRepository.GetByName(asset.Name)
 	if err != nil {
-		return err
-
-	} else if dbAsset == nil { // Can't find asset in database
-		err = m.AssetRepository.Create(asset)
-		if err != nil {
-			return err
+		if errors.Is(err, repositories.ErrAssetNotFound) { // Can't find asset in database
+			err = m.AssetRepository.Create(asset)
+			if err != nil {
+				return err
+			}
 		}
+		return err
 	} else { // Found already existing asset in database
 		err = m.AssetRepository.Update(asset)
 		if err != nil {

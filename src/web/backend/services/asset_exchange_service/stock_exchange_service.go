@@ -1,11 +1,11 @@
 package asset_exchange_service
 
 import (
+	"errors"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_api_client"
 	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
-	"log"
 	"time"
 )
 
@@ -18,12 +18,14 @@ type MoexService struct {
 	AssetRepository repositories.AssetRepository
 	IndexRepository repositories.IndexRepository
 	moexApiClient   *moex_api_client.MoexApiClient
+	time            time.Time
 }
 
 func NewAssetExchangeService(assetRepository repositories.AssetRepository, indexRepository repositories.IndexRepository) AssetExchangeService {
 	newService := &MoexService{
 		AssetRepository: assetRepository,
 		IndexRepository: indexRepository,
+		time:            time.Time{},
 	}
 	newService.setApiClient()
 
@@ -31,7 +33,9 @@ func NewAssetExchangeService(assetRepository repositories.AssetRepository, index
 }
 
 func (m *MoexService) ParseAllAssetsIntoDb() error {
-	allAssets, err := m.parseLatestAssets(getMaxDaysBeforeLatestDate())
+	var allAssets []*moex_models.AssetData
+	var err error
+	allAssets, m.time, err = m.parseLatestAssets(getMaxDaysBeforeLatestDate())
 	if err != nil {
 		return err
 	}
@@ -67,6 +71,10 @@ func (m *MoexService) ParseAllAssetsIntoDb() error {
 }
 
 func (m *MoexService) ParseAllIndexesIntoDb() error {
+	if m.time.IsZero() {
+		return errors.New("assets should be parsed first")
+	}
+
 	allIndexes, err := m.moexApiClient.GetAllIndexes()
 	if err != nil {
 		return err
@@ -80,15 +88,20 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 
 	for _, index := range allIndexes {
 		var indexAssets []*moex_models.IndexAssetsData
-		indexAssets, err = m.parseLatestIndexAssets(index, getMaxDaysBeforeLatestDate())
+		indexAssets, err = m.parseIndexAssets(index, m.time)
 		if err != nil {
 			return err
 		}
+		if len(indexAssets) == 0 { // No assets in index (something wrong with index API response)
+			continue
+		}
 
-		log.Println(index)
 		newAssetsFractionMap := make(map[*models.Asset]float64)
 		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
+			if errors.Is(err, repositories.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response)
+				continue
+			}
 			return err
 		}
 
