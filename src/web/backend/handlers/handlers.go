@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
 	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services"
@@ -112,9 +111,14 @@ func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.R
 		portfolioName := request.FormValue("portfolioName")
 		stocks := request.MultipartForm.Value["stocks[]"]
 
-		_, err = r.portfolioRepository.GetByName(portfolioName)
-		if err == nil {
+		foundPortfolio, err := r.portfolioRepository.GetByName(portfolioName)
+		if foundPortfolio != nil {
 			http.Error(w, "Some portfolio already has this name! Use another one", http.StatusConflict)
+			return
+		}
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
@@ -157,10 +161,7 @@ func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.R
 			http.Error(w, "Internal error", http.StatusInternalServerError)
 			return
 		}
-
-		fmt.Println("Added")
 	}
-
 }
 
 func handleNoPortfolioChosen(w http.ResponseWriter, _ *http.Request, data map[string]interface{}) {
@@ -184,11 +185,6 @@ func handleNoPortfolioChosen(w http.ResponseWriter, _ *http.Request, data map[st
 }
 
 func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Request) {
-	//stocks := []models.Stock{ // Get from db
-	//	{"AFLT", 13, 763.03},
-	//	{"GAZP", 130, 21363.00},
-	//}
-
 	portfolios, err := r.portfolioRepository.GetAll()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

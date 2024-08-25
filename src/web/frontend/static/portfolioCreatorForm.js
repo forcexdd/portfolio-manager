@@ -4,7 +4,6 @@ let quantityHTML = document.getElementById("quantityInput");
 let chosenListTableTbodyHTML = document.getElementById("chosenListTbody");
 
 function renderStocks(stocks) {
-    console.log(stocks);
     stocks.forEach((obj) => {
         let name = obj.name;
         let quantity = obj.quantity;
@@ -85,17 +84,21 @@ function validPortfolioName(string) {
 }
 
 submitButtonHTML.onclick = async (e) => {
-    let formHtml = document.getElementById("selectStocksForm");
-
+    let responseText = "Error! Try again later!";
+    let successDivHTML = document.getElementById("success_text");
+    successDivHTML.style.color = 'red'
+    
     e.preventDefault();
     if (!validPortfolioName(portfolioNameHTML.value)) {
-        alert("invalid name");
+        responseText = "Error! Invalid name!";
+        successDivHTML.innerText = responseText;
         return;
     }
 
     let stocks = getStocks();
     if (stocks.length === 0) {
-        alert("invalid stocks");
+        responseText = "Error! Invalid stocks!";
+        successDivHTML.innerText = responseText;
         return;
     }
 
@@ -111,12 +114,16 @@ submitButtonHTML.onclick = async (e) => {
             body: formData
         });
 
+        
         if (response.ok) {
-            console.log("Form submitted successfully");
+            responseText = "Success! Portfolio was added.";
+            successDivHTML.style.color = 'green'
         } else if (response.status === 409) {
-            alert("This name is already taken");
-            console.error("Form submission failed");
+            responseText = "Error! This name is already taken!";
         }
+        
+        successDivHTML.innerText = responseText;
+        successDivHTML.style.color = 'red'
     } catch (error) {
         console.error("Error submitting form:", error);
     }
