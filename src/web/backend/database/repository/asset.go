@@ -2,17 +2,26 @@ package repository
 
 import (
 	"database/sql"
-	"errors"
-	dtomodels "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
+	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
 
 type AssetRepository interface {
+	// Create creates new record of asset in DB. If there is another asset with the same name returns ErrAssetAlreadyExists
 	Create(asset *model.Asset) error
+
+	// GetByName returns record of asset from DB. If there is no asset with that name returns ErrAssetNotFound
 	GetByName(name string) (*model.Asset, error)
+
+	// Update updates record of asset in DB. If there is no asset with that name returns ErrAssetNotFound
 	Update(asset *model.Asset) error
+
+	// Delete removes all possible asset records from DB. If there is no asset with that name returns ErrAssetNotFound
 	Delete(asset *model.Asset) error
+
 	DeleteByName(name string) error
+
+	// GetAll return all records of asset from DB. If there is no assets returns ErrAssetNotFound
 	GetAll() ([]*model.Asset, error)
 }
 
@@ -47,7 +56,7 @@ func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
 		return nil, ErrAssetNotFound
 	}
 
-	var dtoAsset *dtomodels.Asset
+	var dtoAsset *dtomodel.Asset
 	dtoAsset, err = getAsset(p.db, assetID)
 	if err != nil {
 		return nil, err
@@ -66,15 +75,6 @@ func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
 	}
 	if assetID == 0 {
 		return ErrAssetNotFound
-	}
-
-	var dtoAsset *dtomodels.Asset
-	dtoAsset, err = getAsset(p.db, assetID)
-	if err != nil {
-		return err
-	}
-	if dtoAsset.Name != asset.Name {
-		return errors.New("asset name does not match")
 	}
 
 	err = updateAsset(p.db, assetID, asset.Price)

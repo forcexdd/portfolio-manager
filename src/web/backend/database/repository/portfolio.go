@@ -3,16 +3,27 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	dtomodels "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
+	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
 
 type PortfolioRepository interface {
+	// Create creates new record of portfolio in DB. If there is another portfolio with the same name returns ErrPortfolioAlreadyExists
 	Create(portfolio *model.Portfolio) error
+
+	// GetByName returns record of portfolio from DB. If there is no portfolio with that name returns ErrPortfolioNotFound.
+	// If there are no assets in portfolio returns ErrAssetNotFound
 	GetByName(name string) (*model.Portfolio, error)
+
+	// Update updates record of portfolio in DB. If there is no portfolio with that name returns ErrPortfolioNotFound
 	Update(portfolio *model.Portfolio) error
+
+	// Delete removes portfolio and all possible portfolio records from DB. If there is no portfolio with that name returns ErrPortfolioNotFound
 	Delete(portfolio *model.Portfolio) error
+
 	DeleteByName(name string) error
+
+	// GetAll return all records of portfolio from DB. If there are no portfolios returns ErrPortfolioNotFound
 	GetAll() ([]*model.Portfolio, error)
 }
 
@@ -33,21 +44,16 @@ func (p *PostgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 		return ErrPortfolioAlreadyExists
 	}
 
-	createdPortfolio, err := createPortfolio(p.db, portfolio.Name)
+	var createdPortfolio *dtomodel.Portfolio
+	createdPortfolio, err = createPortfolio(p.db, portfolio.Name)
 	if err != nil {
 		return err
 	}
 	if portfolio.AssetsQuantityMap == nil {
 		return nil
-	}
+	} // If there are no assets just create name
 
-	assetsIDQuantityMap := make(map[int]int)
-	assetsIDQuantityMap, err = convertAssetsQuantityMapToAssetsIDQuantityMap(p.db, portfolio.AssetsQuantityMap)
-	if err != nil {
-		return err
-	}
-
-	err = addManyAssetsToPortfolio(p.db, createdPortfolio.ID, assetsIDQuantityMap)
+	err = p.addManyAssetsToPortfolio(createdPortfolio.ID, portfolio.AssetsQuantityMap)
 
 	return err
 }
@@ -61,15 +67,15 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 		return nil, ErrPortfolioNotFound
 	}
 
-	var portfolioAssets []*dtomodels.PortfolioAsset
+	var portfolioAssets []*dtomodel.PortfolioAsset
 	portfolioAssets, err = getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
 	if err != nil {
 		return nil, err
 	}
 
 	assetsQuantityMap := make(map[*model.Asset]int)
-	var asset *dtomodels.Asset
-	var relationship *dtomodels.PortfolioAssetRelationship
+	var asset *dtomodel.Asset
+	var relationship *dtomodel.PortfolioAssetRelationship
 	for _, portfolioAsset := range portfolioAssets {
 		asset, err = getAsset(p.db, portfolioAsset.AssetID)
 		if err != nil {
@@ -110,18 +116,12 @@ func (p *PostgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 		return ErrPortfolioNotFound
 	}
 
-	err = deleteAllAssetsFromPortfolio(p.db, portfolioID)
+	err = p.deleteAllAssetsFromPortfolio(portfolioID)
 	if err != nil {
 		return err
 	}
 
-	assetsIDQuantityMap := make(map[int]int)
-	assetsIDQuantityMap, err = convertAssetsQuantityMapToAssetsIDQuantityMap(p.db, portfolio.AssetsQuantityMap)
-	if err != nil {
-		return err
-	}
-
-	err = addManyAssetsToPortfolio(p.db, portfolioID, assetsIDQuantityMap)
+	err = p.addManyAssetsToPortfolio(portfolioID, portfolio.AssetsQuantityMap)
 
 	return err
 }
@@ -135,7 +135,7 @@ func (p *PostgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
 		return ErrPortfolioNotFound
 	}
 
-	err = deleteAllAssetsFromPortfolio(p.db, portfolioID)
+	err = p.deleteAllAssetsFromPortfolio(portfolioID)
 	if err != nil {
 		return err
 	}
@@ -175,4 +175,86 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	}
 
 	return portfolios, nil
+}
+
+func (p *PostgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID int) error {
+	portfolioAssets, err := getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
+	if err != nil {
+		return err
+	}
+
+	for _, portfolioAsset := range portfolioAssets {
+		var portfolioAssetRelationship *dtomodel.PortfolioAssetRelationship
+		portfolioAssetRelationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAsset.ID)
+		if err != nil {
+			return err
+		}
+
+		err = deletePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID)
+		if err != nil {
+			return err
+		}
+
+		err = deletePortfolioAsset(p.db, portfolioAsset.ID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *PostgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, assetsQuantityMap map[*model.Asset]int) error {
+	assetsIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap)
+	if err != nil {
+		return err
+	}
+
+	for assetID, quantity := range assetsIDQuantityMap {
+		err = p.addAssetToPortfolio(portfolioID, assetID, quantity)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *PostgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, quantity int) error {
+	portfolioAsset, err := createPortfolioAsset(p.db, portfolioID, assetID)
+	if err != nil {
+		return err
+	}
+
+	_, err = createPortfolioAssetRelationship(p.db, portfolioAsset.ID, quantity)
+
+	return err
+}
+
+func (p *PostgresPortfolioRepository) convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[*model.Asset]int) (map[int]int, error) {
+	assetsNameQuantityMap := make(map[string]int)
+	for asset, quantity := range assetsQuantityMap {
+		assetsNameQuantityMap[asset.Name] = quantity
+	}
+
+	assetsIDQuantityMap, err := p.convertAssetsNameQuantityMapToAssetsIDQuantityMap(assetsNameQuantityMap)
+	if err != nil {
+		return nil, err
+	}
+
+	return assetsIDQuantityMap, nil
+}
+
+func (p *PostgresPortfolioRepository) convertAssetsNameQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[string]int) (map[int]int, error) {
+	assetsIDQuantityMap := make(map[int]int)
+	for assetName, quantity := range assetsQuantityMap {
+		assetID, err := getAssetIDByName(p.db, assetName)
+		if err != nil {
+			return nil, err
+		}
+
+		assetsIDQuantityMap[assetID] = quantity
+	}
+
+	return assetsIDQuantityMap, nil
 }
