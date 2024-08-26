@@ -1,19 +1,19 @@
-package moex_api_client
+package client
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
 	"net/http"
 	"strconv"
 )
 
-// Maybe it's better idea to return set map[*moex_models.AssetData]struct{}
-func (m *MoexApiClient) GetAllAssets(time string) ([]*moex_models.AssetData, error) {
+// Maybe it's better idea to return set map[*model.AssetData]struct{}
+func (m *MoexApiClient) GetAllAssets(time string) ([]*moexmodels.AssetData, error) {
 	url := m.BaseUrl + "statistics/engines/stock/currentprices.json?date=" + time + "&start="
 	start := 0
-	var allData []*moex_models.AssetData
+	var allData []*moexmodels.AssetData
 	hasData := true
 
 	for hasData {
@@ -33,7 +33,7 @@ func (m *MoexApiClient) GetAllAssets(time string) ([]*moex_models.AssetData, err
 	return allData, nil
 }
 
-func (m *MoexApiClient) getAssetsData(url string, start int) ([]*moex_models.AssetData, error) {
+func (m *MoexApiClient) getAssetsData(url string, start int) ([]*moexmodels.AssetData, error) {
 	response, err := http.Get(url + strconv.Itoa(start))
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (m *MoexApiClient) getAssetsData(url string, start int) ([]*moex_models.Ass
 		return nil, err
 	}
 
-	var currPricesData *moex_models.CurrentPricesData
+	var currPricesData *moexmodels.CurrentPricesData
 	currPricesData, err = parseCurrentPricesDataFromJson(body)
 	if err != nil {
 		return nil, err
@@ -61,14 +61,14 @@ func (m *MoexApiClient) getAssetsData(url string, start int) ([]*moex_models.Ass
 	return parseAssetDataFromCurrentPrices(currPricesData)
 }
 
-func parseCurrentPricesDataFromJson(body []byte) (*moex_models.CurrentPricesData, error) {
+func parseCurrentPricesDataFromJson(body []byte) (*moexmodels.CurrentPricesData, error) {
 	var rawData map[string]json.RawMessage
 	err := json.Unmarshal(body, &rawData)
 	if err != nil {
 		return nil, err
 	}
 
-	var data moex_models.CurrentPricesData
+	var data moexmodels.CurrentPricesData
 	err = json.Unmarshal(rawData["currentprices"], &data)
 	if err != nil {
 		return nil, err
@@ -77,15 +77,15 @@ func parseCurrentPricesDataFromJson(body []byte) (*moex_models.CurrentPricesData
 	return &data, nil
 }
 
-func parseAssetDataFromCurrentPrices(assetData *moex_models.CurrentPricesData) ([]*moex_models.AssetData, error) {
-	var allData []*moex_models.AssetData
+func parseAssetDataFromCurrentPrices(assetData *moexmodels.CurrentPricesData) ([]*moexmodels.AssetData, error) {
+	var allData []*moexmodels.AssetData
 
 	for _, asset := range assetData.Data {
 		if len(asset) != 8 {
 			return nil, errors.New("invalid asset data")
 		}
 
-		newAsset := &moex_models.AssetData{
+		newAsset := &moexmodels.AssetData{
 			TradeDate:      toString(asset[0]),
 			BoardId:        toString(asset[1]),
 			SecId:          toString(asset[2]),
@@ -102,13 +102,13 @@ func parseAssetDataFromCurrentPrices(assetData *moex_models.CurrentPricesData) (
 	return allData, nil
 }
 
-func appendLatestAssetData(allData []*moex_models.AssetData, newData []*moex_models.AssetData) []*moex_models.AssetData {
-	latestAssetsMap := make(map[string]*moex_models.AssetData)
+func appendLatestAssetData(allData []*moexmodels.AssetData, newData []*moexmodels.AssetData) []*moexmodels.AssetData {
+	latestAssetsMap := make(map[string]*moexmodels.AssetData)
 	for _, asset := range newData {
 		latestAssetsMap[asset.SecId] = asset
 	}
 
-	var updatedLatestAssets []*moex_models.AssetData
+	var updatedLatestAssets []*moexmodels.AssetData
 	for i, asset := range allData {
 		newLatestAsset, isLatestAsset := latestAssetsMap[asset.SecId] // If we find asset from newData in allData, then update it
 		if isLatestAsset {
@@ -118,7 +118,7 @@ func appendLatestAssetData(allData []*moex_models.AssetData, newData []*moex_mod
 	}
 
 	for _, asset := range latestAssetsMap {
-		if !isInside[*moex_models.AssetData](asset, updatedLatestAssets) {
+		if !isInside[*moexmodels.AssetData](asset, updatedLatestAssets) {
 			allData = append(allData, asset)
 		}
 	}

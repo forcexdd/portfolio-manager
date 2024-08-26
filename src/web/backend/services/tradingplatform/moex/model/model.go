@@ -1,4 +1,4 @@
-package moex_models
+package model
 
 type AssetData struct {
 	TradeDate      string

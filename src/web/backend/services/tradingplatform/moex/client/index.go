@@ -1,14 +1,14 @@
-package moex_api_client
+package client
 
 import (
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
 	"net/http"
 )
 
-func (m *MoexApiClient) GetAllIndexes() ([]*moex_models.IndexData, error) {
+func (m *MoexApiClient) GetAllIndexes() ([]*moexmodels.IndexData, error) {
 	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics.json?lang=en"
 
 	response, err := http.Get(url)
@@ -29,7 +29,7 @@ func (m *MoexApiClient) GetAllIndexes() ([]*moex_models.IndexData, error) {
 		return nil, err
 	}
 
-	var analyticsData *moex_models.AnalyticsData
+	var analyticsData *moexmodels.AnalyticsData
 	analyticsData, err = parseAnalyticsDataFromJson(body)
 	if err != nil {
 		return nil, err
@@ -38,14 +38,14 @@ func (m *MoexApiClient) GetAllIndexes() ([]*moex_models.IndexData, error) {
 	return parseIndexDataFromAnalytics(analyticsData)
 }
 
-func parseAnalyticsDataFromJson(body []byte) (*moex_models.AnalyticsData, error) {
+func parseAnalyticsDataFromJson(body []byte) (*moexmodels.AnalyticsData, error) {
 	var rawData map[string]json.RawMessage
 	err := json.Unmarshal(body, &rawData)
 	if err != nil {
 		return nil, err
 	}
 
-	var data moex_models.AnalyticsData
+	var data moexmodels.AnalyticsData
 	err = json.Unmarshal(rawData["indices"], &data)
 	if err != nil {
 		return nil, err
@@ -54,15 +54,15 @@ func parseAnalyticsDataFromJson(body []byte) (*moex_models.AnalyticsData, error)
 	return &data, nil
 }
 
-func parseIndexDataFromAnalytics(analyticsData *moex_models.AnalyticsData) ([]*moex_models.IndexData, error) {
-	var allData []*moex_models.IndexData
+func parseIndexDataFromAnalytics(analyticsData *moexmodels.AnalyticsData) ([]*moexmodels.IndexData, error) {
+	var allData []*moexmodels.IndexData
 
 	for _, index := range analyticsData.Data {
 		if len(index) != 4 {
 			return nil, errors.New("invalid index data")
 		}
 
-		newIndex := &moex_models.IndexData{
+		newIndex := &moexmodels.IndexData{
 			IndexId:   toString(index[0]),
 			ShortName: toString(index[1]),
 			From:      toString(index[2]),

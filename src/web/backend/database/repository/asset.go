@@ -1,19 +1,19 @@
-package repositories
+package repository
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/dto_models"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
+	dtomodels "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
 
 type AssetRepository interface {
-	Create(asset *models.Asset) error
-	GetByName(name string) (*models.Asset, error)
-	Update(asset *models.Asset) error
-	Delete(asset *models.Asset) error
+	Create(asset *model.Asset) error
+	GetByName(name string) (*model.Asset, error)
+	Update(asset *model.Asset) error
+	Delete(asset *model.Asset) error
 	DeleteByName(name string) error
-	GetAll() ([]*models.Asset, error)
+	GetAll() ([]*model.Asset, error)
 }
 
 type PostgresAssetRepository struct {
@@ -24,7 +24,7 @@ func NewAssetRepository(db *sql.DB) AssetRepository {
 	return &PostgresAssetRepository{db: db}
 }
 
-func (p *PostgresAssetRepository) Create(asset *models.Asset) error {
+func (p *PostgresAssetRepository) Create(asset *model.Asset) error {
 	assetId, err := getAssetIdByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func (p *PostgresAssetRepository) Create(asset *models.Asset) error {
 	return err
 }
 
-func (p *PostgresAssetRepository) GetByName(name string) (*models.Asset, error) {
+func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
 	assetId, err := getAssetIdByName(p.db, name)
 	if err != nil {
 		return nil, err
@@ -47,19 +47,19 @@ func (p *PostgresAssetRepository) GetByName(name string) (*models.Asset, error) 
 		return nil, ErrAssetNotFound
 	}
 
-	var dtoAsset *dto_models.Asset
+	var dtoAsset *dtomodels.Asset
 	dtoAsset, err = getAsset(p.db, assetId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.Asset{
+	return &model.Asset{
 		Name:  dtoAsset.Name,
 		Price: dtoAsset.Price,
 	}, nil
 }
 
-func (p *PostgresAssetRepository) Update(asset *models.Asset) error {
+func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
 	assetId, err := getAssetIdByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -68,7 +68,7 @@ func (p *PostgresAssetRepository) Update(asset *models.Asset) error {
 		return ErrAssetNotFound
 	}
 
-	var dtoAsset *dto_models.Asset
+	var dtoAsset *dtomodels.Asset
 	dtoAsset, err = getAsset(p.db, assetId)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (p *PostgresAssetRepository) Update(asset *models.Asset) error {
 	return err
 }
 
-func (p *PostgresAssetRepository) Delete(asset *models.Asset) error {
+func (p *PostgresAssetRepository) Delete(asset *model.Asset) error {
 	assetId, err := getAssetIdByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -102,10 +102,10 @@ func (p *PostgresAssetRepository) Delete(asset *models.Asset) error {
 }
 
 func (p *PostgresAssetRepository) DeleteByName(name string) error {
-	return p.Delete(&models.Asset{Name: name}) // Price doesn't matter
+	return p.Delete(&model.Asset{Name: name}) // Price doesn't matter
 }
 
-func (p *PostgresAssetRepository) GetAll() ([]*models.Asset, error) {
+func (p *PostgresAssetRepository) GetAll() ([]*model.Asset, error) {
 	dtoAssets, err := getAllAssets(p.db)
 	if err != nil {
 		return nil, err
@@ -114,13 +114,13 @@ func (p *PostgresAssetRepository) GetAll() ([]*models.Asset, error) {
 		return nil, ErrAssetNotFound
 	}
 
-	var assets []*models.Asset
-	var asset models.Asset
+	var assets []*model.Asset
+	var asset model.Asset
 	for _, dtoAsset := range dtoAssets {
 		asset.Name = dtoAsset.Name
 		asset.Price = dtoAsset.Price
 
-		newAsset := &models.Asset{
+		newAsset := &model.Asset{
 			Name:  asset.Name,
 			Price: asset.Price,
 		}

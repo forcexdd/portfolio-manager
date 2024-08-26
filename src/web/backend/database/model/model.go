@@ -1,4 +1,4 @@
-package dto_models
+package model
 
 type Portfolio struct {
 	Id   int // PK

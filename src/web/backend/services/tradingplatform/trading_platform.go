@@ -1,11 +1,11 @@
-package asset_exchange_service
+package tradingplatform
 
 import (
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_api_client"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/client"
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"time"
 )
 
@@ -15,13 +15,13 @@ type AssetExchangeService interface {
 }
 
 type MoexService struct {
-	AssetRepository repositories.AssetRepository
-	IndexRepository repositories.IndexRepository
-	moexApiClient   *moex_api_client.MoexApiClient
+	AssetRepository repository.AssetRepository
+	IndexRepository repository.IndexRepository
+	moexApiClient   *client.MoexApiClient
 	time            time.Time
 }
 
-func NewAssetExchangeService(assetRepository repositories.AssetRepository, indexRepository repositories.IndexRepository) AssetExchangeService {
+func NewTradingPlatformService(assetRepository repository.AssetRepository, indexRepository repository.IndexRepository) AssetExchangeService {
 	newService := &MoexService{
 		AssetRepository: assetRepository,
 		IndexRepository: indexRepository,
@@ -33,21 +33,21 @@ func NewAssetExchangeService(assetRepository repositories.AssetRepository, index
 }
 
 func (m *MoexService) ParseAllAssetsIntoDb() error {
-	var allAssets []*moex_models.AssetData
+	var allAssets []*moexmodels.AssetData
 	var err error
 	allAssets, m.time, err = m.parseLatestAssets(getMaxDaysBeforeLatestDate())
 	if err != nil {
 		return err
 	}
 
-	var allAssetsInDb []*models.Asset
+	var allAssetsInDb []*model.Asset
 	allAssetsInDb, err = m.AssetRepository.GetAll()
 	if err != nil {
 		return err
 	}
 
 	for _, asset := range allAssets {
-		newAsset := &models.Asset{
+		newAsset := &model.Asset{
 			Name:  asset.SecId,
 			Price: asset.CurPrice,
 		}
@@ -80,14 +80,14 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		return err
 	}
 
-	var allIndexesInDb []*models.Index
+	var allIndexesInDb []*model.Index
 	allIndexesInDb, err = m.IndexRepository.GetAll()
 	if err != nil {
 		return err
 	}
 
 	for _, index := range allIndexes {
-		var indexAssets []*moex_models.IndexAssetsData
+		var indexAssets []*moexmodels.IndexAssetsData
 		indexAssets, err = m.parseIndexAssets(index, m.time)
 		if err != nil {
 			return err
@@ -96,16 +96,16 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 			continue
 		}
 
-		newAssetsFractionMap := make(map[*models.Asset]float64)
+		newAssetsFractionMap := make(map[*model.Asset]float64)
 		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
-			if errors.Is(err, repositories.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response)
+			if errors.Is(err, repository.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response)
 				continue
 			}
 			return err
 		}
 
-		newIndex := &models.Index{
+		newIndex := &model.Index{
 			Name:              index.IndexId,
 			AssetsFractionMap: newAssetsFractionMap,
 		}
@@ -129,7 +129,7 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 }
 
 func (m *MoexService) setApiClient() {
-	m.moexApiClient = moex_api_client.NewMoexApiClient()
+	m.moexApiClient = client.NewMoexApiClient()
 }
 
 func getMaxDaysBeforeLatestDate() int {

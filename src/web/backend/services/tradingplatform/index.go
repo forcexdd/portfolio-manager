@@ -1,15 +1,15 @@
-package asset_exchange_service
+package tradingplatform
 
 import (
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"log"
 	"time"
 )
 
-func (m *MoexService) parseIndexAssets(index *moex_models.IndexData, parseTime time.Time) ([]*moex_models.IndexAssetsData, error) {
+func (m *MoexService) parseIndexAssets(index *moexmodels.IndexData, parseTime time.Time) ([]*moexmodels.IndexAssetsData, error) {
 	allIndexAssets, err := m.moexApiClient.GetAllIndexAssets(formatTime(parseTime), index)
 	if err != nil {
 		return nil, err
@@ -18,10 +18,10 @@ func (m *MoexService) parseIndexAssets(index *moex_models.IndexData, parseTime t
 	return allIndexAssets, nil
 }
 
-func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
+func (m *MoexService) createOrUpdateIndex(index *model.Index) error {
 	_, err := m.IndexRepository.GetByName(index.Name)
 	if err != nil {
-		if errors.Is(err, repositories.ErrIndexNotFound) { // Can't find index in database
+		if errors.Is(err, repository.ErrIndexNotFound) { // Can't find index in database
 			err = m.IndexRepository.Create(index)
 			if err != nil {
 				return err
@@ -38,8 +38,8 @@ func (m *MoexService) createOrUpdateIndex(index *models.Index) error {
 	return nil
 }
 
-func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moex_models.IndexAssetsData) (map[*models.Asset]float64, error) {
-	newAssetsFractionMap := make(map[*models.Asset]float64)
+func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moexmodels.IndexAssetsData) (map[*model.Asset]float64, error) {
+	newAssetsFractionMap := make(map[*model.Asset]float64)
 	for _, indexAsset := range indexAssets {
 		asset, err := m.AssetRepository.GetByName(indexAsset.SecIds)
 		if err != nil {
@@ -55,17 +55,17 @@ func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moex
 	return newAssetsFractionMap, nil
 }
 
-func removeIndexByNameFromSlice(indexes []*models.Index, name string) []*models.Index {
+func removeIndexByNameFromSlice(indexes []*model.Index, name string) []*model.Index {
 	for i, index := range indexes {
 		if index.Name == name {
-			return removeElementFromSliceByIndex[*models.Index](indexes, i)
+			return removeElementFromSliceByIndex[*model.Index](indexes, i)
 		}
 	}
 
 	return indexes
 }
 
-func (m *MoexService) removeOldIndexesFromDb(indexes []*models.Index) error {
+func (m *MoexService) removeOldIndexesFromDb(indexes []*model.Index) error {
 	for _, index := range indexes {
 		err := m.IndexRepository.Delete(index)
 		if err != nil {

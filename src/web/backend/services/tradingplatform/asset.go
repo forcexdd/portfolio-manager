@@ -1,14 +1,14 @@
-package asset_exchange_service
+package tradingplatform
 
 import (
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service/moex/moex_models"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"time"
 )
 
-func (m *MoexService) parseLatestAssets(maxDays int) ([]*moex_models.AssetData, time.Time, error) {
+func (m *MoexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, time.Time, error) {
 	parseTime := getCurrentTime()
 
 	allAssets, err := m.moexApiClient.GetAllAssets(formatTime(parseTime))
@@ -31,10 +31,10 @@ func (m *MoexService) parseLatestAssets(maxDays int) ([]*moex_models.AssetData, 
 	return allAssets, parseTime, nil
 }
 
-func (m *MoexService) createOrUpdateAsset(asset *models.Asset) error {
+func (m *MoexService) createOrUpdateAsset(asset *model.Asset) error {
 	_, err := m.AssetRepository.GetByName(asset.Name)
 	if err != nil {
-		if errors.Is(err, repositories.ErrAssetNotFound) { // Can't find asset in database
+		if errors.Is(err, repository.ErrAssetNotFound) { // Can't find asset in database
 			err = m.AssetRepository.Create(asset)
 			if err != nil {
 				return err
@@ -51,17 +51,17 @@ func (m *MoexService) createOrUpdateAsset(asset *models.Asset) error {
 	return nil
 }
 
-func removeAssetByNameFromSlice(assets []*models.Asset, name string) []*models.Asset {
+func removeAssetByNameFromSlice(assets []*model.Asset, name string) []*model.Asset {
 	for index, asset := range assets {
 		if asset.Name == name {
-			return removeElementFromSliceByIndex[*models.Asset](assets, index)
+			return removeElementFromSliceByIndex[*model.Asset](assets, index)
 		}
 	}
 
 	return assets
 }
 
-func (m *MoexService) removeOldAssetsFromDb(assets []*models.Asset) error {
+func (m *MoexService) removeOldAssetsFromDb(assets []*model.Asset) error {
 	for _, asset := range assets {
 		err := m.AssetRepository.Delete(asset)
 		if err != nil {

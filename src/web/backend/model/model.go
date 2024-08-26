@@ -1,4 +1,4 @@
-package models
+package model
 
 type Portfolio struct {
 	Name              string

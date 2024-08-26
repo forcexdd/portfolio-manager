@@ -1,19 +1,19 @@
-package repositories
+package repository
 
 import (
 	"database/sql"
 	"errors"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/dto_models"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/models"
+	dtomodels "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
 
 type IndexRepository interface {
-	Create(index *models.Index) error
-	GetByName(name string) (*models.Index, error)
-	Update(index *models.Index) error
-	Delete(index *models.Index) error
+	Create(index *model.Index) error
+	GetByName(name string) (*model.Index, error)
+	Update(index *model.Index) error
+	Delete(index *model.Index) error
 	DeleteByName(name string) error
-	GetAll() ([]*models.Index, error)
+	GetAll() ([]*model.Index, error)
 }
 
 type PostgresIndexRepository struct {
@@ -24,7 +24,7 @@ func NewIndexRepository(db *sql.DB) IndexRepository {
 	return &PostgresIndexRepository{db: db}
 }
 
-func (p *PostgresIndexRepository) Create(index *models.Index) error {
+func (p *PostgresIndexRepository) Create(index *model.Index) error {
 	indexId, err := getIndexIdByName(p.db, index.Name)
 	if err != nil {
 		return err
@@ -33,7 +33,7 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 		return ErrIndexAlreadyExists
 	}
 
-	var createdIndex *dto_models.Index
+	var createdIndex *dtomodels.Index
 	createdIndex, err = createIndex(p.db, index.Name)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (p *PostgresIndexRepository) Create(index *models.Index) error {
 	return err
 }
 
-func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) {
+func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
 	indexId, err := getIndexIdByName(p.db, name)
 	if err != nil {
 		return nil, err
@@ -62,15 +62,15 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		return nil, ErrIndexNotFound
 	}
 
-	var indexAssets []*dto_models.IndexAsset
+	var indexAssets []*dtomodels.IndexAsset
 	indexAssets, err = getAllIndexAssetsByIndexId(p.db, indexId)
 	if err != nil {
 		return nil, err
 	}
 
-	assetsFractionMap := make(map[*models.Asset]float64)
-	var asset *dto_models.Asset
-	var relationship *dto_models.IndexAssetRelationship
+	assetsFractionMap := make(map[*model.Asset]float64)
+	var asset *dtomodels.Asset
+	var relationship *dtomodels.IndexAssetRelationship
 	for _, indexAsset := range indexAssets {
 		asset, err = getAsset(p.db, indexAsset.AssetId)
 		if err != nil {
@@ -88,7 +88,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 			return nil, errors.New("relationship not found")
 		}
 
-		newAsset := models.Asset{
+		newAsset := model.Asset{
 			Name:  asset.Name,
 			Price: asset.Price,
 		}
@@ -96,13 +96,13 @@ func (p *PostgresIndexRepository) GetByName(name string) (*models.Index, error) 
 		assetsFractionMap[&newAsset] = relationship.Fraction
 	}
 
-	return &models.Index{
+	return &model.Index{
 		Name:              name,
 		AssetsFractionMap: assetsFractionMap,
 	}, nil
 }
 
-func (p *PostgresIndexRepository) Update(index *models.Index) error {
+func (p *PostgresIndexRepository) Update(index *model.Index) error {
 	indexId, err := getIndexIdByName(p.db, index.Name)
 	if err != nil {
 		return err
@@ -127,7 +127,7 @@ func (p *PostgresIndexRepository) Update(index *models.Index) error {
 	return err
 }
 
-func (p *PostgresIndexRepository) Delete(index *models.Index) error {
+func (p *PostgresIndexRepository) Delete(index *model.Index) error {
 	indexId, err := getIndexIdByName(p.db, index.Name)
 	if err != nil {
 		return err
@@ -147,10 +147,10 @@ func (p *PostgresIndexRepository) Delete(index *models.Index) error {
 }
 
 func (p *PostgresIndexRepository) DeleteByName(name string) error {
-	return p.Delete(&models.Index{Name: name, AssetsFractionMap: nil})
+	return p.Delete(&model.Index{Name: name, AssetsFractionMap: nil})
 }
 
-func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
+func (p *PostgresIndexRepository) GetAll() ([]*model.Index, error) {
 	dtoIndexes, err := getAllIndexes(p.db)
 	if err != nil {
 		return nil, err
@@ -159,15 +159,15 @@ func (p *PostgresIndexRepository) GetAll() ([]*models.Index, error) {
 		return nil, ErrIndexNotFound
 	}
 
-	var indexes []*models.Index
-	var index *models.Index
+	var indexes []*model.Index
+	var index *model.Index
 	for _, dtoIndex := range dtoIndexes {
 		index, err = p.GetByName(dtoIndex.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		newIndex := &models.Index{
+		newIndex := &model.Index{
 			Name:              index.Name,
 			AssetsFractionMap: index.AssetsFractionMap,
 		}

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/repositories"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/database/storage"
-	"github.com/forcexdd/portfolio_manager/src/web/backend/services/asset_exchange_service"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 	"log"
 	"time"
 )
@@ -19,17 +19,17 @@ func main() {
 	}
 	//db.DeleteStorage()
 
-	assetRepository := repositories.NewAssetRepository(db.GetDb())
-	indexRepository := repositories.NewIndexRepository(db.GetDb())
+	assetRepository := repository.NewAssetRepository(db.GetDb())
+	indexRepository := repository.NewIndexRepository(db.GetDb())
 
-	assetExchangeService := asset_exchange_service.NewAssetExchangeService(assetRepository, indexRepository)
+	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository)
 
-	err = assetExchangeService.ParseAllAssetsIntoDb()
+	err = tradingPlatformService.ParseAllAssetsIntoDb()
 	if err != nil {
 		panic(err)
 	}
 
-	err = assetExchangeService.ParseAllIndexesIntoDb()
+	err = tradingPlatformService.ParseAllIndexesIntoDb()
 	if err != nil {
 		panic(err)
 	}
