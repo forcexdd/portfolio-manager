@@ -2,8 +2,8 @@ package model
 
 type AssetData struct {
 	TradeDate      string
-	BoardId        string
-	SecId          string
+	BoardID        string
+	SecID          string
 	TradeTime      string
 	CurPrice       float64
 	LastPrice      float64
@@ -16,7 +16,7 @@ type CurrentPricesData struct {
 }
 
 type IndexData struct {
-	IndexId   string
+	IndexID   string
 	ShortName string
 	From      string
 	Till      string
@@ -27,11 +27,11 @@ type AnalyticsData struct {
 }
 
 type IndexAssetsData struct {
-	IndexId        string
+	IndexID        string
 	TradeDate      string
 	Ticker         string
 	ShortNames     string
-	SecIds         string
+	SecIDs         string
 	Weight         float64
 	TradingSession int
 }

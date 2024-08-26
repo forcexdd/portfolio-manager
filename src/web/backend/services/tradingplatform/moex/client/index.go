@@ -63,7 +63,7 @@ func parseIndexDataFromAnalytics(analyticsData *moexmodels.AnalyticsData) ([]*mo
 		}
 
 		newIndex := &moexmodels.IndexData{
-			IndexId:   toString(index[0]),
+			IndexID:   toString(index[0]),
 			ShortName: toString(index[1]),
 			From:      toString(index[2]),
 			Till:      toString(index[3]),

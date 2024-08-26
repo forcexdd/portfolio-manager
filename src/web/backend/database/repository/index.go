@@ -25,11 +25,11 @@ func NewIndexRepository(db *sql.DB) IndexRepository {
 }
 
 func (p *PostgresIndexRepository) Create(index *model.Index) error {
-	indexId, err := getIndexIdByName(p.db, index.Name)
+	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
 		return err
 	}
-	if indexId != 0 {
+	if indexID != 0 {
 		return ErrIndexAlreadyExists
 	}
 
@@ -42,28 +42,28 @@ func (p *PostgresIndexRepository) Create(index *model.Index) error {
 		return nil
 	}
 
-	assetsIdQuantityMap := make(map[int]float64)
-	assetsIdQuantityMap, err = convertAssetsFractionMapToAssetsIdFractionMap(p.db, index.AssetsFractionMap)
+	assetsIDQuantityMap := make(map[int]float64)
+	assetsIDQuantityMap, err = convertAssetsFractionMapToAssetsIDFractionMap(p.db, index.AssetsFractionMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyAssetsToIndex(p.db, createdIndex.Id, assetsIdQuantityMap)
+	err = addManyAssetsToIndex(p.db, createdIndex.ID, assetsIDQuantityMap)
 
 	return err
 }
 
 func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
-	indexId, err := getIndexIdByName(p.db, name)
+	indexID, err := getIndexIDByName(p.db, name)
 	if err != nil {
 		return nil, err
 	}
-	if indexId == 0 {
+	if indexID == 0 {
 		return nil, ErrIndexNotFound
 	}
 
 	var indexAssets []*dtomodels.IndexAsset
-	indexAssets, err = getAllIndexAssetsByIndexId(p.db, indexId)
+	indexAssets, err = getAllIndexAssetsByIndexID(p.db, indexID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
 	var asset *dtomodels.Asset
 	var relationship *dtomodels.IndexAssetRelationship
 	for _, indexAsset := range indexAssets {
-		asset, err = getAsset(p.db, indexAsset.AssetId)
+		asset, err = getAsset(p.db, indexAsset.AssetID)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +80,7 @@ func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
 			return nil, ErrAssetNotFound
 		}
 
-		relationship, err = getIndexAssetRelationshipByIndexAssetId(p.db, indexAsset.Id)
+		relationship, err = getIndexAssetRelationshipByIndexAssetID(p.db, indexAsset.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -103,45 +103,45 @@ func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
 }
 
 func (p *PostgresIndexRepository) Update(index *model.Index) error {
-	indexId, err := getIndexIdByName(p.db, index.Name)
+	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
 		return err
 	}
-	if indexId == 0 {
+	if indexID == 0 {
 		return ErrIndexNotFound
 	}
 
-	err = deleteAllAssetsFromIndex(p.db, indexId)
+	err = deleteAllAssetsFromIndex(p.db, indexID)
 	if err != nil {
 		return err
 	}
 
-	assetsIdFractionMap := make(map[int]float64)
-	assetsIdFractionMap, err = convertAssetsFractionMapToAssetsIdFractionMap(p.db, index.AssetsFractionMap)
+	assetsIDFractionMap := make(map[int]float64)
+	assetsIDFractionMap, err = convertAssetsFractionMapToAssetsIDFractionMap(p.db, index.AssetsFractionMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyAssetsToIndex(p.db, indexId, assetsIdFractionMap)
+	err = addManyAssetsToIndex(p.db, indexID, assetsIDFractionMap)
 
 	return err
 }
 
 func (p *PostgresIndexRepository) Delete(index *model.Index) error {
-	indexId, err := getIndexIdByName(p.db, index.Name)
+	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
 		return err
 	}
-	if indexId == 0 {
+	if indexID == 0 {
 		return ErrIndexNotFound
 	}
 
-	err = deleteAllAssetsFromIndex(p.db, indexId)
+	err = deleteAllAssetsFromIndex(p.db, indexID)
 	if err != nil {
 		return err
 	}
 
-	err = deleteIndex(p.db, indexId)
+	err = deleteIndex(p.db, indexID)
 
 	return err
 }

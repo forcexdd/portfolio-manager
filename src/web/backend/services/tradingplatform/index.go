@@ -41,12 +41,12 @@ func (m *MoexService) createOrUpdateIndex(index *model.Index) error {
 func (m *MoexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moexmodels.IndexAssetsData) (map[*model.Asset]float64, error) {
 	newAssetsFractionMap := make(map[*model.Asset]float64)
 	for _, indexAsset := range indexAssets {
-		asset, err := m.AssetRepository.GetByName(indexAsset.SecIds)
+		asset, err := m.AssetRepository.GetByName(indexAsset.SecIDs)
 		if err != nil {
 			return nil, err
 		}
 		if asset == nil {
-			log.Printf("Asset %s does not exist", indexAsset.SecIds)
+			log.Printf("Asset %s does not exist", indexAsset.SecIDs)
 		}
 
 		newAssetsFractionMap[asset] = indexAsset.Weight

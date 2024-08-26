@@ -87,8 +87,8 @@ func parseAssetDataFromCurrentPrices(assetData *moexmodels.CurrentPricesData) ([
 
 		newAsset := &moexmodels.AssetData{
 			TradeDate:      toString(asset[0]),
-			BoardId:        toString(asset[1]),
-			SecId:          toString(asset[2]),
+			BoardID:        toString(asset[1]),
+			SecID:          toString(asset[2]),
 			TradeTime:      toString(asset[3]),
 			CurPrice:       toFloat64(asset[4]),
 			LastPrice:      toFloat64(asset[5]),
@@ -105,12 +105,12 @@ func parseAssetDataFromCurrentPrices(assetData *moexmodels.CurrentPricesData) ([
 func appendLatestAssetData(allData []*moexmodels.AssetData, newData []*moexmodels.AssetData) []*moexmodels.AssetData {
 	latestAssetsMap := make(map[string]*moexmodels.AssetData)
 	for _, asset := range newData {
-		latestAssetsMap[asset.SecId] = asset
+		latestAssetsMap[asset.SecID] = asset
 	}
 
 	var updatedLatestAssets []*moexmodels.AssetData
 	for i, asset := range allData {
-		newLatestAsset, isLatestAsset := latestAssetsMap[asset.SecId] // If we find asset from newData in allData, then update it
+		newLatestAsset, isLatestAsset := latestAssetsMap[asset.SecID] // If we find asset from newData in allData, then update it
 		if isLatestAsset {
 			allData[i] = newLatestAsset
 			updatedLatestAssets = append(updatedLatestAssets, newLatestAsset)

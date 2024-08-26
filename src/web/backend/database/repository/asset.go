@@ -25,11 +25,11 @@ func NewAssetRepository(db *sql.DB) AssetRepository {
 }
 
 func (p *PostgresAssetRepository) Create(asset *model.Asset) error {
-	assetId, err := getAssetIdByName(p.db, asset.Name)
+	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
 	}
-	if assetId != 0 {
+	if assetID != 0 {
 		return ErrAssetAlreadyExists
 	}
 
@@ -39,16 +39,16 @@ func (p *PostgresAssetRepository) Create(asset *model.Asset) error {
 }
 
 func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
-	assetId, err := getAssetIdByName(p.db, name)
+	assetID, err := getAssetIDByName(p.db, name)
 	if err != nil {
 		return nil, err
 	}
-	if assetId == 0 {
+	if assetID == 0 {
 		return nil, ErrAssetNotFound
 	}
 
 	var dtoAsset *dtomodels.Asset
-	dtoAsset, err = getAsset(p.db, assetId)
+	dtoAsset, err = getAsset(p.db, assetID)
 	if err != nil {
 		return nil, err
 	}
@@ -60,16 +60,16 @@ func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
 }
 
 func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
-	assetId, err := getAssetIdByName(p.db, asset.Name)
+	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
 	}
-	if assetId == 0 {
+	if assetID == 0 {
 		return ErrAssetNotFound
 	}
 
 	var dtoAsset *dtomodels.Asset
-	dtoAsset, err = getAsset(p.db, assetId)
+	dtoAsset, err = getAsset(p.db, assetID)
 	if err != nil {
 		return err
 	}
@@ -77,26 +77,26 @@ func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
 		return errors.New("asset name does not match")
 	}
 
-	err = updateAsset(p.db, assetId, asset.Price)
+	err = updateAsset(p.db, assetID, asset.Price)
 
 	return err
 }
 
 func (p *PostgresAssetRepository) Delete(asset *model.Asset) error {
-	assetId, err := getAssetIdByName(p.db, asset.Name)
+	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
 	}
-	if assetId == 0 {
+	if assetID == 0 {
 		return ErrAssetNotFound
 	}
 
-	err = deleteAssetFromConnectedTables(p.db, assetId)
+	err = deleteAssetFromConnectedTables(p.db, assetID)
 	if err != nil {
 		return err
 	}
 
-	err = deleteAsset(p.db, assetId)
+	err = deleteAsset(p.db, assetID)
 
 	return err
 }

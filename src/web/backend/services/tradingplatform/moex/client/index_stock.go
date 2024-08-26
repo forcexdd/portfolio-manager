@@ -10,7 +10,7 @@ import (
 )
 
 func (m *MoexApiClient) GetAllIndexAssets(time string, index *model.IndexData) ([]*model.IndexAssetsData, error) {
-	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics/" + index.IndexId + ".json?lang=en&date=" + time + "&start="
+	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics/" + index.IndexID + ".json?lang=en&date=" + time + "&start="
 	start := 0
 	var allData []*model.IndexAssetsData
 	hasData := true
@@ -85,11 +85,11 @@ func parseIndexAssetsDataFromIndexAnalytics(indexAssetsData *model.IndexAnalytic
 		}
 
 		newIndexAsset := &model.IndexAssetsData{
-			IndexId:        toString(indexAsset[0]),
+			IndexID:        toString(indexAsset[0]),
 			TradeDate:      toString(indexAsset[1]),
 			Ticker:         toString(indexAsset[2]),
 			ShortNames:     toString(indexAsset[3]),
-			SecIds:         toString(indexAsset[4]),
+			SecIDs:         toString(indexAsset[4]),
 			Weight:         toFloat64(indexAsset[5]),
 			TradingSession: int(toFloat64(indexAsset[6])),
 		}

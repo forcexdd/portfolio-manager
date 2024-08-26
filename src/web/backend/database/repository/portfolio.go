@@ -25,11 +25,11 @@ func NewPortfolioRepository(db *sql.DB) PortfolioRepository {
 }
 
 func (p *PostgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
-	portfolioId, err := getPortfolioIdByName(p.db, portfolio.Name)
+	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
 	}
-	if portfolioId != 0 {
+	if portfolioID != 0 {
 		return ErrPortfolioAlreadyExists
 	}
 
@@ -41,28 +41,28 @@ func (p *PostgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 		return nil
 	}
 
-	assetsIdQuantityMap := make(map[int]int)
-	assetsIdQuantityMap, err = convertAssetsQuantityMapToAssetsIdQuantityMap(p.db, portfolio.AssetsQuantityMap)
+	assetsIDQuantityMap := make(map[int]int)
+	assetsIDQuantityMap, err = convertAssetsQuantityMapToAssetsIDQuantityMap(p.db, portfolio.AssetsQuantityMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyAssetsToPortfolio(p.db, createdPortfolio.Id, assetsIdQuantityMap)
+	err = addManyAssetsToPortfolio(p.db, createdPortfolio.ID, assetsIDQuantityMap)
 
 	return err
 }
 
 func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, error) {
-	portfolioId, err := getPortfolioIdByName(p.db, name)
+	portfolioID, err := getPortfolioIDByName(p.db, name)
 	if err != nil {
 		return nil, err
 	}
-	if portfolioId == 0 {
+	if portfolioID == 0 {
 		return nil, ErrPortfolioNotFound
 	}
 
 	var portfolioAssets []*dtomodels.PortfolioAsset
-	portfolioAssets, err = getAllPortfolioAssetsByPortfolioId(p.db, portfolioId)
+	portfolioAssets, err = getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 	var asset *dtomodels.Asset
 	var relationship *dtomodels.PortfolioAssetRelationship
 	for _, portfolioAsset := range portfolioAssets {
-		asset, err = getAsset(p.db, portfolioAsset.AssetId)
+		asset, err = getAsset(p.db, portfolioAsset.AssetID)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +79,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 			return nil, ErrAssetNotFound
 		}
 
-		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetId(p.db, portfolioAsset.Id)
+		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAsset.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -102,45 +102,45 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 }
 
 func (p *PostgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
-	portfolioId, err := getPortfolioIdByName(p.db, portfolio.Name)
+	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
 	}
-	if portfolioId == 0 {
+	if portfolioID == 0 {
 		return ErrPortfolioNotFound
 	}
 
-	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
+	err = deleteAllAssetsFromPortfolio(p.db, portfolioID)
 	if err != nil {
 		return err
 	}
 
-	assetsIdQuantityMap := make(map[int]int)
-	assetsIdQuantityMap, err = convertAssetsQuantityMapToAssetsIdQuantityMap(p.db, portfolio.AssetsQuantityMap)
+	assetsIDQuantityMap := make(map[int]int)
+	assetsIDQuantityMap, err = convertAssetsQuantityMapToAssetsIDQuantityMap(p.db, portfolio.AssetsQuantityMap)
 	if err != nil {
 		return err
 	}
 
-	err = addManyAssetsToPortfolio(p.db, portfolioId, assetsIdQuantityMap)
+	err = addManyAssetsToPortfolio(p.db, portfolioID, assetsIDQuantityMap)
 
 	return err
 }
 
 func (p *PostgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
-	portfolioId, err := getPortfolioIdByName(p.db, portfolio.Name)
+	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
 	}
-	if portfolioId == 0 {
+	if portfolioID == 0 {
 		return ErrPortfolioNotFound
 	}
 
-	err = deleteAllAssetsFromPortfolio(p.db, portfolioId)
+	err = deleteAllAssetsFromPortfolio(p.db, portfolioID)
 	if err != nil {
 		return err
 	}
 
-	err = deletePortfolio(p.db, portfolioId)
+	err = deletePortfolio(p.db, portfolioID)
 
 	return err
 }

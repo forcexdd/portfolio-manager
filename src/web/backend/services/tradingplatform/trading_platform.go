@@ -48,7 +48,7 @@ func (m *MoexService) ParseAllAssetsIntoDb() error {
 
 	for _, asset := range allAssets {
 		newAsset := &model.Asset{
-			Name:  asset.SecId,
+			Name:  asset.SecID,
 			Price: asset.CurPrice,
 		}
 
@@ -106,7 +106,7 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		}
 
 		newIndex := &model.Index{
-			Name:              index.IndexId,
+			Name:              index.IndexID,
 			AssetsFractionMap: newAssetsFractionMap,
 		}
 
