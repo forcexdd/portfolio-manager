@@ -1,3 +1,5 @@
+import * as Cookies from "./cookies.mjs";
+
 let deleteButtonHTML = document.getElementById("delete-portfolio");
 
 deleteButtonHTML.onclick = async (e) => {
@@ -6,8 +8,7 @@ deleteButtonHTML.onclick = async (e) => {
         return
     }
     
-    let portfolioSelectionHTML = document.getElementById("portfolios");
-    let portfolio = portfolioSelectionHTML.value;
+    let portfolio = Cookies.getCookie("current_portfolio");
     
     e.preventDefault()
 

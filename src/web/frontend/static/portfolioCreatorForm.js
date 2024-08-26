@@ -1,7 +1,11 @@
+import * as validators from './validators.mjs';
+
 let addStockButtonHTML = document.getElementById("addStockButton");
 let stockNameInputHTML = document.getElementById("selectStocks");
 let quantityHTML = document.getElementById("quantityInput");
 let chosenListTableTbodyHTML = document.getElementById("chosenListTbody");
+
+quantityHTML.oninput = (e) => validators.onNumberInput(e, quantityHTML);
 
 function renderStocks(stocks) {
     stocks.forEach((obj) => {
@@ -123,7 +127,6 @@ submitButtonHTML.onclick = async (e) => {
         }
         
         successDivHTML.innerText = responseText;
-        successDivHTML.style.color = 'red'
     } catch (error) {
         console.error("Error submitting form:", error);
     }

@@ -1,0 +1,39 @@
+{{template "base" .}}
+
+{{define "title"}}
+Following Index
+{{end}}
+
+{{define "main"}}
+<div>
+    <link rel="stylesheet" href="../static/following_index.css">
+<!--    <label>-->
+<!--        Budget:-->
+<!--        <input id="budgetInput" type="number" value={{.budget}} min="1"/>-->
+<!--    </label>-->
+    <div class="margin-top">
+        <label>
+            Index:
+        </label>
+        <select aria-label="indexes" id="indexes">
+            <option value="select" disabled="disabled" selected>select index...</option>
+            {{ range $index := .indexes }}
+            <option value={{$index.Name}}> {{ $index.Name }} </option>
+            {{ end }}
+        </select>
+    </div>
+    <div class="margin-top">
+        <button id="renderTable">Render the table</button>
+    </div>
+    <div id="render-following-index-table-box">
+        
+    </div>
+</div>
+<script src="../static/following_index.js" type="module"></script>
+<script src="../static/validators.mjs" type="module"></script>
+<script>
+    $(document).ready(function () {
+        $("#indexes").select2();
+    })
+</script>
+{{end}}

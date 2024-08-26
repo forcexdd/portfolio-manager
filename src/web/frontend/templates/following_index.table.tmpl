@@ -6,17 +6,19 @@
             <th>Total Price</th>
             <th>Your fraction</th>
             <th>Index fraction</th>
+            <th>Difference in fraction</th>
         </tr>
         {{ range $stock := .stocks }}
         <tr>
-            <th>{{ $stock.Name }}</th>
-            <th>{{ $stock.Quantity }}</th>
-            <th>{{ printf "%.2f" $stock.Price }}</th>
-            <th>{{ printf "%.2f" $stock.CurrentFraction }}</th>
-            <th>{{ printf "%.2f" $stock.SuggestedFraction }}</th>
+            <td>{{ $stock.Name }}</td>
+            <td>{{ $stock.Quantity }}</td>
+            <td>{{ printf "%.2f" $stock.Price }}</td>
+            <td>{{ printf "%.2f" $stock.CurrentFraction }}</td>
+            <td>{{ printf "%.2f" $stock.SuggestedFraction }}</td>
+            <td>{{ printf "%.2f" $stock.DifferenceInFraction }}</td>
         </tr>
         {{ end }}
     </table>
-    <div>Pls imagine there is a chart, I got no money to do that. I am poor, my family is starving and the team lead is just sitting up there laughing about us, poor junior programmers. Pls God help us, I am begging you.</div>
+    <div>Pls imagine there is a chart, I got no money to do that. I am poor, my family is starving and the team lead is just sitting up there laughing at us, poor junior programmers. Pls God help us, I am begging you.</div>
 </div>
 
