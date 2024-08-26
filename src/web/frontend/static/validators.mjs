@@ -1,6 +1,4 @@
-let quantityInputHTML = document.getElementById("quantityInput");
-
-quantityInputHTML.oninput = (e) => {
+export function onNumberInput(e, inputHTML) {
     function removeChars(str) {
         let newStr = "";
 
@@ -11,9 +9,12 @@ quantityInputHTML.oninput = (e) => {
         return newStr;
     }
 
-    let newValue = removeChars(quantityInputHTML.value);
+    let newValue = removeChars(inputHTML.value);
     if (newValue === "0" || newValue === "")
         newValue++;
 
-    quantityInputHTML.value = newValue;
+    inputHTML.value = newValue;
+}
+
+export default class validators {
 }
