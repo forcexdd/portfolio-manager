@@ -4,9 +4,9 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/chart_drawer"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/chart_drawer"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -14,14 +14,14 @@ import (
 )
 
 type RouteHandler struct {
-	portfolioRepository repositories.PortfolioRepository
-	stocksRepository    repositories.StockRepository
-	indexRepository     repositories.IndexRepository
+	portfolioRepository repository.PortfolioRepository
+	assetRepository     repository.AssetRepository
+	indexRepository     repository.IndexRepository
 }
 
-func NewRouteHandler(p repositories.PortfolioRepository,
-	s repositories.StockRepository, i repositories.IndexRepository) *RouteHandler {
-	return &RouteHandler{portfolioRepository: p, stocksRepository: s, indexRepository: i}
+func NewRouteHandler(p repository.PortfolioRepository,
+	s repository.AssetRepository, i repository.IndexRepository) *RouteHandler {
+	return &RouteHandler{portfolioRepository: p, assetRepository: s, indexRepository: i}
 }
 
 func (r *RouteHandler) HandleStaticFiles(w http.ResponseWriter, request *http.Request) {
@@ -52,7 +52,7 @@ func (r *RouteHandler) HandleHome(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	portfolios, err := r.portfolioRepository.GetAll()
-	if err != nil {
+	if err != nil && !errors.Is(err, repository.ErrPortfolioNotFound) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -82,12 +82,12 @@ func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.R
 		}
 
 		portfolios, err := r.portfolioRepository.GetAll()
-		if err != nil {
+		if err != nil && !errors.Is(err, repository.ErrPortfolioNotFound) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		stocks, err := r.stocksRepository.GetAll()
+		assets, err := r.assetRepository.GetAll()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -95,7 +95,7 @@ func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.R
 
 		data := make(map[string]interface{})
 		data["portfolios"] = portfolios
-		data["stocks"] = stocks
+		data["assets"] = assets
 
 		err = templates.Execute(w, data)
 		if err != nil {
@@ -111,51 +111,49 @@ func (r *RouteHandler) HandleAddPortfolio(w http.ResponseWriter, request *http.R
 		}
 
 		portfolioName := request.FormValue("portfolioName")
-		stocks := request.MultipartForm.Value["stocks[]"]
+		assets := request.MultipartForm.Value["assets[]"]
 
-		foundPortfolio, err := r.portfolioRepository.GetByName(portfolioName)
-		if foundPortfolio != nil {
+		_, err = r.portfolioRepository.GetByName(portfolioName)
+		if !errors.Is(err, repository.ErrPortfolioNotFound) {
 			http.Error(w, "Some portfolio already has this name! Use another one", http.StatusConflict)
 			return
-		}
-
-		if err != nil {
+		} else if err != nil && !errors.Is(err, repository.ErrPortfolioNotFound) {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
 			return
 		}
 
-		type myStock struct {
+		type myAsset struct {
 			Name     string `json:"name"`
 			Quantity string `json:"Quantity"`
 		}
 
-		curStock := myStock{}
+		curAsset := myAsset{}
 
-		stocksMap := make(map[*models.Stock]int)
-		for _, stock := range stocks {
-			err = json.Unmarshal([]byte(stock), &curStock)
+		assetsMap := make(map[*model.Asset]int)
+		for _, asset := range assets {
+			err = json.Unmarshal([]byte(asset), &curAsset)
 			if err != nil {
 				http.Error(w, "Internal error", http.StatusInternalServerError)
 				return
 			}
 
-			stockFromDb, err := r.stocksRepository.GetByName(curStock.Name)
+			assetFromDB, err := r.assetRepository.GetByName(curAsset.Name)
 			if err != nil {
 				http.Error(w, "Internal error", http.StatusInternalServerError)
 				return
 			}
 
-			num, err := strconv.Atoi(curStock.Quantity)
+			num, err := strconv.Atoi(curAsset.Quantity)
 			if err != nil {
 				http.Error(w, "Internal error", http.StatusInternalServerError)
 				return
 			}
-			stocksMap[stockFromDb] = num
+			assetsMap[assetFromDB] = num
 		}
 
-		portfolio := &models.Portfolio{
+		portfolio := &model.Portfolio{
 			Name:              portfolioName,
-			StocksQuantityMap: stocksMap,
+			AssetsQuantityMap: assetsMap,
 		}
 
 		err = r.portfolioRepository.Create(portfolio)
@@ -188,7 +186,7 @@ func handleNoPortfolioChosen(w http.ResponseWriter, _ *http.Request, data map[st
 
 func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Request) {
 	portfolios, err := r.portfolioRepository.GetAll()
-	if err != nil {
+	if err != nil && !errors.Is(err, repository.ErrPortfolioNotFound) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -208,37 +206,37 @@ func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Reques
 	}
 
 	portfolio, err := r.portfolioRepository.GetByName(cookie.Value)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	if portfolio == nil {
+	if errors.Is(err, repository.ErrPortfolioNotFound) {
 		handleNoPortfolioChosen(w, request, data)
 		return
 	}
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-	pieChart, err := chart_drawer.GetStockPieChart(portfolio)
+	pieChart, err := chart_drawer.GetAssetPieChart(portfolio)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	type curStock struct {
+	type curAsset struct {
 		Name     string
 		Quantity int
 		Price    float64
 	}
 
-	var stocks []*curStock
-	for stock, quantity := range portfolio.StocksQuantityMap {
-		stocks = append(stocks, &curStock{
-			Name:     stock.Name,
+	var assets []*curAsset
+	for asset, quantity := range portfolio.AssetsQuantityMap {
+		assets = append(assets, &curAsset{
+			Name:     asset.Name,
 			Quantity: quantity,
-			Price:    stock.Price,
+			Price:    asset.Price,
 		})
 	}
 
 	data["PieChart"] = base64.StdEncoding.EncodeToString(pieChart)
-	data["stocks"] = stocks
+	data["assets"] = assets
 
 	files := []string{
 		"./src/web/frontend/templates/manager.page.tmpl",
@@ -291,10 +289,10 @@ func (r *RouteHandler) HandleRemovePortfolio(w http.ResponseWriter, request *htt
 }
 
 // TODO move this function to somewhere?????
-func countPriceOfPortfolio(portfolio *models.Portfolio) float64 {
+func countPriceOfPortfolio(portfolio *model.Portfolio) float64 {
 	var price float64 = 0
-	for stock, quantity := range portfolio.StocksQuantityMap {
-		price += stock.Price * float64(quantity)
+	for asset, quantity := range portfolio.AssetsQuantityMap {
+		price += asset.Price * float64(quantity)
 	}
 
 	return price
@@ -321,13 +319,13 @@ func (r *RouteHandler) HandleFollowingIndex(w http.ResponseWriter, request *http
 		return
 	}
 
-	portfolio, err := r.portfolioRepository.GetByName(cookie.Value)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	_, err = r.portfolioRepository.GetByName(cookie.Value)
+	if errors.Is(err, repository.ErrPortfolioNotFound) {
+		handleNoPortfolioChosen(w, request, data)
 		return
 	}
-	if portfolio == nil {
-		handleNoPortfolioChosen(w, request, data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -338,7 +336,7 @@ func (r *RouteHandler) HandleFollowingIndex(w http.ResponseWriter, request *http
 	}
 
 	data["indexes"] = indexes
-	data["budget"] = countPriceOfPortfolio(portfolio)
+	//data["budget"] = countPriceOfPortfolio(portfolio)
 
 	files := []string{
 		"./src/web/frontend/templates/following_index.page.tmpl",
@@ -358,10 +356,10 @@ func (r *RouteHandler) HandleFollowingIndex(w http.ResponseWriter, request *http
 }
 
 // TODO move this function to somewhere?????
-func tryFindStockInStocksMap[V any](mp *map[*models.Stock]V, name string) *models.Stock {
-	for stock := range *mp {
-		if stock.Name == name {
-			return stock
+func tryFindAssetInAssetsMap[V any](mp *map[*model.Asset]V, name string) *model.Asset {
+	for asset := range *mp {
+		if asset.Name == name {
+			return asset
 		}
 	}
 
@@ -403,7 +401,7 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 			return
 		}
 
-		type tableStocks struct {
+		type tableAssets struct {
 			Name                 string
 			Quantity             int
 			Price                float64
@@ -413,53 +411,53 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 			//Advice            string
 		}
 
-		var curStocks []*tableStocks
+		var curAsset []*tableAssets
 
-		for stock, fraction := range index.StocksFractionMap {
-			tableStock := &tableStocks{
-				Name:              stock.Name,
+		for asset, fraction := range index.AssetsFractionMap {
+			tableAsset := &tableAssets{
+				Name:              asset.Name,
 				SuggestedFraction: fraction,
 			}
 
-			foundStock := tryFindStockInStocksMap(&portfolio.StocksQuantityMap, stock.Name)
-			if foundStock != nil {
-				tableStock.Quantity = portfolio.StocksQuantityMap[foundStock]
-				tableStock.Price = foundStock.Price * float64(tableStock.Quantity)
-				tableStock.CurrentFraction = 100 * float64(tableStock.Quantity) * stock.Price / countPriceOfPortfolio(portfolio)
+			foundAsset := tryFindAssetInAssetsMap(&portfolio.AssetsQuantityMap, asset.Name)
+			if foundAsset != nil {
+				tableAsset.Quantity = portfolio.AssetsQuantityMap[foundAsset]
+				tableAsset.Price = foundAsset.Price * float64(tableAsset.Quantity)
+				tableAsset.CurrentFraction = 100 * float64(tableAsset.Quantity) * asset.Price / countPriceOfPortfolio(portfolio)
 			} else {
-				tableStock.Quantity = 0
-				tableStock.Price = 0
-				tableStock.CurrentFraction = 0
+				tableAsset.Quantity = 0
+				tableAsset.Price = 0
+				tableAsset.CurrentFraction = 0
 			}
 
-			tableStock.DifferenceInFraction = tableStock.CurrentFraction - tableStock.SuggestedFraction
+			tableAsset.DifferenceInFraction = tableAsset.CurrentFraction - tableAsset.SuggestedFraction
 
-			curStocks = append(curStocks, tableStock)
+			curAsset = append(curAsset, tableAsset)
 		}
 
-		for stock := range portfolio.StocksQuantityMap {
-			foundInIndex := tryFindStockInStocksMap(&index.StocksFractionMap, stock.Name)
+		for asset := range portfolio.AssetsQuantityMap {
+			foundInIndex := tryFindAssetInAssetsMap(&index.AssetsFractionMap, asset.Name)
 			if foundInIndex != nil {
 				continue
 			}
 
-			curFraction := 100 * float64(portfolio.StocksQuantityMap[stock]) * stock.Price / countPriceOfPortfolio(portfolio)
+			curFraction := 100 * float64(portfolio.AssetsQuantityMap[asset]) * asset.Price / countPriceOfPortfolio(portfolio)
 
-			tableStock := &tableStocks{
-				Name:                 stock.Name,
-				Quantity:             portfolio.StocksQuantityMap[stock],
-				Price:                stock.Price,
+			tableAsset := &tableAssets{
+				Name:                 asset.Name,
+				Quantity:             portfolio.AssetsQuantityMap[asset],
+				Price:                asset.Price,
 				CurrentFraction:      curFraction,
 				SuggestedFraction:    0,
 				DifferenceInFraction: curFraction,
 			}
 
-			curStocks = append(curStocks, tableStock)
+			curAsset = append(curAsset, tableAsset)
 		}
 
 		data := make(map[string]interface{})
 		data["chart"] = "todo_chart_base64_here"
-		data["stocks"] = curStocks
+		data["assets"] = curAsset
 		files := []string{
 			"./src/web/frontend/templates/following_index.table.tmpl",
 		}

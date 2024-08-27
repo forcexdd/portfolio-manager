@@ -1,14 +1,14 @@
 import * as validators from './validators.mjs';
 
-let addStockButtonHTML = document.getElementById("addStockButton");
-let stockNameInputHTML = document.getElementById("selectStocks");
+let addAssetsButtonHTML = document.getElementById("addAssetButton");
+let assetNameInputHTML = document.getElementById("selectAssets");
 let quantityHTML = document.getElementById("quantityInput");
 let chosenListTableTbodyHTML = document.getElementById("chosenListTbody");
 
 quantityHTML.oninput = (e) => validators.onNumberInput(e, quantityHTML);
 
-function renderStocks(stocks) {
-    stocks.forEach((obj) => {
+function renderAssets(assets) {
+    assets.forEach((obj) => {
         let name = obj.name;
         let quantity = obj.quantity;
 
@@ -25,9 +25,9 @@ function renderStocks(stocks) {
         removeButton.type = "button";
         removeButton.innerText = "Remove";
         removeButton.onclick = (e) => {
-            let array = getStocks().filter((element) => element.name !== name);
+            let array = getAssets().filter((element) => element.name !== name);
             chosenListTableTbodyHTML.querySelector(`[id='${name}']`).remove();
-            updateStocks(array);
+            updateAssets(array);
         }
 
         let thName = document.createElement("th");
@@ -48,26 +48,26 @@ function renderStocks(stocks) {
     });
 }
 
-let chosenStocks = [];
+let chosenAssets = [];
 
-function updateStocks(array) {
-    chosenStocks = array;
+function updateAssets(array) {
+    chosenAssets = array;
 }
 
-function getStocks() {
-    return chosenStocks;
+function getAssets() {
+    return chosenAssets;
 }
 
-addStockButtonHTML.onclick = (e) => {
-    if (stockNameInputHTML.value === "--SELECT--")
+addAssetsButtonHTML.onclick = (e) => {
+    if (assetNameInputHTML.value === "--SELECT--")
         return;
 
     let obj = {};
-    obj["name"] = stockNameInputHTML.value;
+    obj["name"] = assetNameInputHTML.value;
     obj["quantity"] =quantityHTML.value;
 
     let newObject = true;
-    chosenStocks.forEach((e) => {
+    chosenAssets.forEach((e) => {
         if (e.name === obj.name) {
             e.quantity = obj.quantity;
             newObject = false;
@@ -75,9 +75,9 @@ addStockButtonHTML.onclick = (e) => {
     })
 
     if (newObject)
-        chosenStocks.push(obj);
+        chosenAssets.push(obj);
 
-    renderStocks(chosenStocks);
+    renderAssets(chosenAssets);
 };
 
 let submitButtonHTML = document.getElementById("submitButton");
@@ -99,17 +99,17 @@ submitButtonHTML.onclick = async (e) => {
         return;
     }
 
-    let stocks = getStocks();
-    if (stocks.length === 0) {
-        responseText = "Error! Invalid stocks!";
+    let assets = getAssets();
+    if (assets.length === 0) {
+        responseText = "Error! Invalid assets!";
         successDivHTML.innerText = responseText;
         return;
     }
 
     let formData = new FormData();
     formData.append("portfolioName", portfolioNameHTML.value);
-    stocks.forEach(stock => {
-        formData.append("stocks[]", JSON.stringify(stock));
+    assets.forEach(assets => {
+        formData.append("assets[]", JSON.stringify(assets));
     });
 
     try {

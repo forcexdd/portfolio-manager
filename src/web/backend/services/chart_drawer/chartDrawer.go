@@ -2,24 +2,24 @@ package chart_drawer
 
 import (
 	"bytes"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/models"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	"github.com/wcharczuk/go-chart/v2"
 )
 
-func GetStockPieChart(portfolio *models.Portfolio) ([]byte, error) {
+func GetAssetPieChart(portfolio *model.Portfolio) ([]byte, error) {
 	var values []chart.Value
 
-	for stock, quantity := range portfolio.StocksQuantityMap {
+	for asset, quantity := range portfolio.AssetsQuantityMap {
 		values = append(values, chart.Value{
-			Label: stock.Name,
-			Value: stock.Price * float64(quantity),
+			Label: asset.Name,
+			Value: asset.Price * float64(quantity),
 		})
 	}
 
 	pieChart := chart.PieChart{
 		Values: values,
 	}
-	
+
 	var buf bytes.Buffer
 
 	if err := pieChart.Render(chart.SVG, &buf); err != nil {

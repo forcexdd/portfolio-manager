@@ -13,17 +13,17 @@ Manager
             <th>Quantity</th>
             <th>Price</th>
         </tr>
-        {{ range $stock := .stocks }}
+        {{ range $asset := .assets }}
         <tr>
-            <th>{{ $stock.Name }}</th>
-            <th>{{ $stock.Quantity }}</th>
-            <th>{{ $stock.Price }}</th>
+            <th>{{ $asset.Name }}</th>
+            <th>{{ $asset.Quantity }}</th>
+            <th>{{ $asset.Price }}</th>
         </tr>
         {{ end }}
     </table>
     <button type="button" id="delete-portfolio">Delete Portfolio</button>
     <div>
-        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart" id="pieChartStocks">
+        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart" id="pieChartAssets">
     </div>
     <script type="module" src="../static/manager.js"></script>
     <script type="module" src="../static/cookies.mjs"></script>

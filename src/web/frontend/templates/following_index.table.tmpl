@@ -8,20 +8,20 @@
             <th>Index fraction</th>
             <th>Difference in fraction</th>
         </tr>
-        {{ range $stock := .stocks }}
+        {{ range $asset := .assets }}
         <tr>
-            <td class="stock-name">{{ $stock.Name }}</td>
-            <td class="stock-quantity">{{ $stock.Quantity }}</td>
-            <td class="stock-price">{{ printf "%.2f" $stock.Price }}</td>
-            <td class="stock-current-fraction">{{ printf "%.2f" $stock.CurrentFraction }}</td>
-            <td class="stock-suggested-fraction">{{ printf "%.2f" $stock.SuggestedFraction }}</td>
-            <td class="stock-difference-in-fraction">{{ printf "%.2f" $stock.DifferenceInFraction }}</td>
-            <td><button class="add-stock-button">+</button></td>
-            <td><button class="remove-stock-button">-</button></td>
+            <td class="asset-name">{{ $asset.Name }}</td>
+            <td class="asset-quantity">{{ $asset.Quantity }}</td>
+            <td class="asset-price">{{ printf "%.2f" $asset.Price }}</td>
+            <td class="asset-current-fraction">{{ printf "%.2f" $asset.CurrentFraction }}</td>
+            <td class="asset-suggested-fraction">{{ printf "%.2f" $asset.SuggestedFraction }}</td>
+            <td class="asset-difference-in-fraction">{{ printf "%.2f" $asset.DifferenceInFraction }}</td>
+            <td><button class="add-asset-button">+</button></td>
+            <td><button class="remove-asset-button">-</button></td>
         </tr>
         {{ end }}
     </table>
-    <button id="remove-unused-stocks">Remove unused stocks</button>
+    <button id="remove-unused-assets">Remove unused assets</button>
     <button id="save-changes">Save changes</button>
     <div>Pls imagine there is a chart, I got no money to do that. I am poor, my family is starving and the team lead is just sitting up there laughing at us, poor junior programmers. Pls God help us, I am begging you.</div>
 </div>

@@ -6,18 +6,18 @@ Choose Portfolio
 
 {{define "main"}}
 <link rel="stylesheet" href="../static/portfolioCreatorForm.css" type="text/css">
-<form class="row" id="selectStocksForm" method="post">
+<form class="row" id="selectAssetsForm" method="post">
     <label>
         Name:
         <input type="text" id="portfolioNameInput" placeholder="Portfolio Name"/>
     </label>
     <br/>
     <div class="row">
-        Select Stocks:
+        Select Assets:
         <label>
-            <select id="selectStocks">
-                {{ range $stock := .stocks }}
-                <option value={{$stock.Name}}> {{ $stock.Name }} </option>
+            <select id="selectAssets">
+                {{ range $asset := .assets }}
+                <option value={{$asset.Name}}> {{ $asset.Name }} </option>
                 {{ end }}
             </select>
         </label>
@@ -28,8 +28,8 @@ Choose Portfolio
         </label>
 
         <label>
-            <button id="addStockButton" type="button">
-                Add Stock
+            <button id="addAssetButton" type="button">
+                Add Asset
             </button>
         </label>
     </div>
@@ -51,7 +51,7 @@ Choose Portfolio
 <script type="module" src="../static/validators.mjs" ></script>
 <script>
     $(document).ready(function() {
-        $('#selectStocks').select2();
+        $('#selectAssets').select2();
     });
 </script>
 {{ end }}

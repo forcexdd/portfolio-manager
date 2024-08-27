@@ -8,8 +8,8 @@ let divToPlaceTableHTML = document.getElementById("render-following-index-table-
 
 // budgetInputHTML.oninput = (e) => validators.onNumberInput(e, budgetInputHTML);
 
-function addStock(node) {
-    let quantityHTML = node.getElementsByClassName("stock-quantity")[0];
+function addAsset(node) {
+    let quantityHTML = node.getElementsByClassName("asset-quantity")[0];
     let quantity = parseInt(quantityHTML.textContent);
     if (isNaN(quantity)) {
         quantity = 0;
@@ -19,8 +19,8 @@ function addStock(node) {
     quantityHTML.textContent = String(quantity);
 }
 
-function removeStock(node) {
-    let quantityHTML = node.getElementsByClassName("stock-quantity")[0];
+function removeAsset(node) {
+    let quantityHTML = node.getElementsByClassName("asset-quantity")[0];
     let quantity = parseInt(quantityHTML.textContent);
     if (isNaN(quantity) || quantity === 0) {
         return;
@@ -29,7 +29,7 @@ function removeStock(node) {
     quantityHTML.textContent = String(quantity);
 }
 
-function removeUnusedStocks() {
+function removeUnusedAssets() {
     let table = document.getElementById("following-index-table");
     for (let i = 1; i < table.rows.length; i++) {
         let suggested_fraction = parseFloat(table.rows[i].cells[4].innerText);
@@ -43,18 +43,18 @@ function removeUnusedStocks() {
 
 function saveChanges() {
     let table = document.getElementById("following-index-table");
-    let stocks = [];
+    let assets = [];
     for (let i = 1; i < table.rows.length; i++) {
         let row = table.rows[i];
         let name = row.cells[0].innerText;
         let quantity = parseInt(row.cells[1].innerText);
-        stocks.push({
+        assets.push({
             "name": name,
             "quantity": quantity
         });
     }
     let formData = new FormData();
-    formData.append("stocks[]", JSON.stringify(stocks));
+    formData.append("assets[]", JSON.stringify(assets));
     formData.append("portfolioName", Cookies.getCookie("current_portfolio"));
     fetch("/update_portfolio", {
         method: "POST",
@@ -111,15 +111,15 @@ renderButtonHTML.onclick = (e) => {
     }).then(async response => {
         divToPlaceTableHTML.innerHTML = await response.text();
         colorDifference();
-        for (let addButton of document.getElementsByClassName("add-stock-button")) {
-            addButton.onclick = (_) => addStock(addButton.parentElement.parentElement);
+        for (let addButton of document.getElementsByClassName("add-asset-button")) {
+            addButton.onclick = (_) => addAsset(addButton.parentElement.parentElement);
         }
 
-        for (let removeButton of document.getElementsByClassName("remove-stock-button")) {
-            removeButton.onclick = (_) => removeStock(removeButton.parentElement.parentElement);
+        for (let removeButton of document.getElementsByClassName("remove-asset-button")) {
+            removeButton.onclick = (_) => removeAsset(removeButton.parentElement.parentElement);
         }
         
-        document.getElementById("remove-unused-stocks").onclick = (_) => removeUnusedStocks();
+        document.getElementById("remove-unused-assets").onclick = (_) => removeUnusedAssets();
         document.getElementById("save-changes").onclick = (_) => saveChanges();
     })
         .catch(e => console.error(e));
