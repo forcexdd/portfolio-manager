@@ -67,39 +67,8 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 		return nil, ErrPortfolioNotFound
 	}
 
-	var portfolioAssets []*dtomodel.PortfolioAsset
-	portfolioAssets, err = getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
-	if err != nil {
-		return nil, err
-	}
-
 	assetsQuantityMap := make(map[*model.Asset]int)
-	var asset *dtomodel.Asset
-	var relationship *dtomodel.PortfolioAssetRelationship
-	for _, portfolioAsset := range portfolioAssets {
-		asset, err = getAsset(p.db, portfolioAsset.AssetID)
-		if err != nil {
-			return nil, err
-		}
-		if asset == nil {
-			return nil, ErrAssetNotFound
-		}
-
-		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAsset.ID)
-		if err != nil {
-			return nil, err
-		}
-		if relationship == nil {
-			return nil, errors.New("relationship not found")
-		}
-
-		newAsset := model.Asset{
-			Name:  asset.Name,
-			Price: asset.Price,
-		}
-
-		assetsQuantityMap[&newAsset] = relationship.Quantity
-	}
+	assetsQuantityMap, err = p.getAssetsQuantityMapByPortfolioID(portfolioID)
 
 	return &model.Portfolio{
 		Name:              name,
@@ -116,12 +85,24 @@ func (p *PostgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 		return ErrPortfolioNotFound
 	}
 
-	err = p.deleteAllAssetsFromPortfolio(portfolioID)
+	var oldPortfolio *model.Portfolio
+	oldPortfolio, err = p.GetByName(portfolio.Name)
 	if err != nil {
 		return err
 	}
 
-	err = p.addManyAssetsToPortfolio(portfolioID, portfolio.AssetsQuantityMap)
+	newAssetIDQuantityMap := make(map[int]int)
+	newAssetIDQuantityMap, err = p.convertAssetsQuantityMapToAssetsIDQuantityMap(portfolio.AssetsQuantityMap)
+
+	oldAssetIDQuantityMap := make(map[int]int)
+	oldAssetIDQuantityMap, err = p.convertAssetsQuantityMapToAssetsIDQuantityMap(oldPortfolio.AssetsQuantityMap)
+
+	err = p.addOrUpdateNewPortfolioAssets(portfolioID, oldAssetIDQuantityMap, newAssetIDQuantityMap)
+	if err != nil {
+		return err
+	}
+
+	err = p.deleteOldPortfolioAssets(portfolioID, oldAssetIDQuantityMap, newAssetIDQuantityMap)
 
 	return err
 }
@@ -177,6 +158,143 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	return portfolios, nil
 }
 
+func (p *PostgresPortfolioRepository) getAssetsQuantityMapByPortfolioID(portfolioID int) (map[*model.Asset]int, error) {
+	portfolioAssets, err := getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
+	if err != nil {
+		return nil, err
+	}
+
+	assetsQuantityMap := make(map[*model.Asset]int)
+	var asset *dtomodel.Asset
+	var relationship *dtomodel.PortfolioAssetRelationship
+	for _, portfolioAsset := range portfolioAssets {
+		asset, err = getAsset(p.db, portfolioAsset.AssetID)
+		if err != nil {
+			return nil, err
+		}
+		if asset == nil {
+			return nil, ErrAssetNotFound
+		}
+
+		relationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAsset.ID)
+		if err != nil {
+			return nil, err
+		}
+		if relationship == nil {
+			return nil, errors.New("relationship not found")
+		}
+
+		newAsset := model.Asset{
+			Name:  asset.Name,
+			Price: asset.Price,
+		}
+
+		assetsQuantityMap[&newAsset] = relationship.Quantity
+	}
+
+	return assetsQuantityMap, nil
+}
+
+func (p *PostgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, assetsQuantityMap map[*model.Asset]int) error {
+	assetsIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap)
+	if err != nil {
+		return err
+	}
+
+	for assetID, quantity := range assetsIDQuantityMap {
+		err = p.addAssetToPortfolio(portfolioID, assetID, quantity)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *PostgresPortfolioRepository) addOrUpdateNewPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
+	for assetID, quantity := range newAssetIDQuantityMap {
+		_, assetExists := oldAssetIDQuantityMap[assetID]
+
+		if !assetExists {
+			err := p.addAssetToPortfolio(portfolioID, assetID, quantity) // Since asset already exists in DB we are just adding it to portfolio
+			if err != nil {
+				return err
+			}
+		} else {
+			err := p.updatePortfolioAsset(portfolioID, assetID, quantity) // Updating to new quantity
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *PostgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, quantity int) error {
+	portfolioAsset, err := createPortfolioAsset(p.db, portfolioID, assetID)
+	if err != nil {
+		return err
+	}
+
+	_, err = createPortfolioAssetRelationship(p.db, portfolioAsset.ID, quantity)
+
+	return err
+}
+
+func (p *PostgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID, quantity int) error {
+	portfolioAssetID, err := getPortfolioAssetIDByPortfolioIdAndAssetID(p.db, portfolioID, assetID)
+	if err != nil {
+		return err
+	}
+
+	var portfolioAssetRelationship *dtomodel.PortfolioAssetRelationship
+	portfolioAssetRelationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAssetID)
+	if err != nil {
+		return err
+	}
+
+	err = updatePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID, quantity)
+
+	return err
+}
+
+func (p *PostgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
+	for assetID, _ := range oldAssetIDQuantityMap {
+		_, assetExists := newAssetIDQuantityMap[assetID]
+		if !assetExists {
+			err := p.deleteAssetFromTablesConnectedToPortfolio(portfolioID, assetID) // Just delete from connected tables. Shouldn't delete asset itself
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *PostgresPortfolioRepository) deleteAssetFromTablesConnectedToPortfolio(portfolioID int, assetID int) error {
+	portfolioAssetID, err := getPortfolioAssetIDByPortfolioIdAndAssetID(p.db, portfolioID, assetID)
+	if err != nil {
+		return err
+	}
+
+	var portfolioAssetRelationship *dtomodel.PortfolioAssetRelationship
+	portfolioAssetRelationship, err = getPortfolioAssetRelationshipByPortfolioAssetID(p.db, portfolioAssetID)
+	if err != nil {
+		return err
+	}
+
+	err = deletePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID)
+	if err != nil {
+		return err
+	}
+
+	err = deletePortfolioAsset(p.db, portfolioAssetID)
+
+	return err
+}
+
 func (p *PostgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID int) error {
 	portfolioAssets, err := getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
 	if err != nil {
@@ -202,33 +320,6 @@ func (p *PostgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID i
 	}
 
 	return nil
-}
-
-func (p *PostgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, assetsQuantityMap map[*model.Asset]int) error {
-	assetsIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap)
-	if err != nil {
-		return err
-	}
-
-	for assetID, quantity := range assetsIDQuantityMap {
-		err = p.addAssetToPortfolio(portfolioID, assetID, quantity)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (p *PostgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, quantity int) error {
-	portfolioAsset, err := createPortfolioAsset(p.db, portfolioID, assetID)
-	if err != nil {
-		return err
-	}
-
-	_, err = createPortfolioAssetRelationship(p.db, portfolioAsset.ID, quantity)
-
-	return err
 }
 
 func (p *PostgresPortfolioRepository) convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[*model.Asset]int) (map[int]int, error) {

@@ -280,6 +280,28 @@ func getPortfolioAsset(db *sql.DB, portfolioAssetID int) (*dtomodel.PortfolioAss
 	return &portfolioAsset, nil
 }
 
+func deletePortfolioAsset(db *sql.DB, portfolioAssetID int) error {
+	query := `DELETE FROM portfolio_assets WHERE id = $1;`
+	_, err := db.Exec(query, portfolioAssetID)
+
+	return err
+}
+
+func getPortfolioAssetIDByPortfolioIdAndAssetID(db *sql.DB, portfolioID int, assetID int) (int, error) {
+	query := `SELECT id FROM portfolio_assets WHERE portfolio_id = $1 AND asset_id = $2;`
+
+	var portfolioAssetID int
+	err := db.QueryRow(query, portfolioID, assetID).Scan(&portfolioAssetID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return portfolioAssetID, nil
+}
+
 func getAllPortfolioAssetsByPortfolioID(db *sql.DB, portfolioID int) ([]*dtomodel.PortfolioAsset, error) {
 	query := `SELECT id, portfolio_id, asset_id FROM portfolio_assets WHERE portfolio_id = $1;`
 	rows, err := db.Query(query, portfolioID)
@@ -317,52 +339,6 @@ func getAllPortfolioAssetsByPortfolioID(db *sql.DB, portfolioID int) ([]*dtomode
 	}
 
 	return portfolioAssets, nil
-}
-
-func getAllPortfolioAssetsByAssetID(db *sql.DB, assetID int) ([]*dtomodel.PortfolioAsset, error) {
-	query := `SELECT id, portfolio_id, asset_id FROM portfolio_assets WHERE asset_id = $1;`
-	rows, err := db.Query(query, assetID)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		closeErr := rows.Close()
-		if closeErr != nil && err == nil {
-			err = closeErr
-		}
-	}()
-
-	var portfolioAssets []*dtomodel.PortfolioAsset
-	var portfolioAsset dtomodel.PortfolioAsset
-	for rows.Next() {
-		err = rows.Scan(&portfolioAsset.ID, &portfolioAsset.PortfolioID, &portfolioAsset.AssetID)
-		if err != nil {
-			return nil, err
-		}
-
-		newPortfolioAssets := &dtomodel.PortfolioAsset{
-			ID:          portfolioAsset.ID,
-			PortfolioID: portfolioAsset.PortfolioID,
-			AssetID:     portfolioAsset.AssetID,
-		}
-
-		portfolioAssets = append(portfolioAssets, newPortfolioAssets)
-	}
-
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-
-	return portfolioAssets, nil
-}
-
-func deletePortfolioAsset(db *sql.DB, portfolioAssetID int) error {
-	query := `DELETE FROM portfolio_assets WHERE id = $1;`
-	_, err := db.Exec(query, portfolioAssetID)
-
-	return err
 }
 
 /*
@@ -571,6 +547,21 @@ func deleteIndexAsset(db *sql.DB, indexAssetID int) error {
 	_, err := db.Exec(query, indexAssetID)
 
 	return err
+}
+
+func getIndexAssetIDByIndexIdAndAssetID(db *sql.DB, indexID int, assetID int) (int, error) {
+	query := `SELECT id FROM index_assets WHERE index_id = $1 AND asset_id = $2;`
+
+	var indexAssetID int
+	err := db.QueryRow(query, indexID, assetID).Scan(&indexAssetID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return indexAssetID, nil
 }
 
 func getAllIndexAssetsByIndexID(db *sql.DB, indexID int) ([]*dtomodel.IndexAsset, error) {
