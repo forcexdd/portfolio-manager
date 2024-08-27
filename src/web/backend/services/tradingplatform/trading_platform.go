@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const maxDaysBeforeLatestDate = 15
+
 type AssetExchangeService interface {
 	ParseAllAssetsIntoDB() error
 	ParseAllIndexesIntoDB() error
@@ -35,7 +37,7 @@ func NewTradingPlatformService(assetRepository repository.AssetRepository, index
 func (m *MoexService) ParseAllAssetsIntoDB() error {
 	var allAssets []*moexmodels.AssetData
 	var err error
-	allAssets, m.time, err = m.parseLatestAssets(getMaxDaysBeforeLatestDate())
+	allAssets, m.time, err = m.parseLatestAssets(maxDaysBeforeLatestDate)
 	if err != nil {
 		return err
 	}
@@ -139,10 +141,6 @@ func (m *MoexService) ParseAllIndexesIntoDB() error {
 
 func (m *MoexService) setApiClient() {
 	m.moexApiClient = client.NewMoexApiClient()
-}
-
-func getMaxDaysBeforeLatestDate() int {
-	return 15
 }
 
 func removeElementFromSliceByIndex[T interface{}](slice []T, index int) []T {
