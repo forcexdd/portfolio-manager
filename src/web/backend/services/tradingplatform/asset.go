@@ -61,7 +61,7 @@ func removeAssetByNameFromSlice(assets []*model.Asset, name string) []*model.Ass
 	return assets
 }
 
-func (m *MoexService) removeOldAssetsFromDb(assets []*model.Asset) error {
+func (m *MoexService) removeOldAssetsFromDB(assets []*model.Asset) error {
 	for _, asset := range assets {
 		err := m.AssetRepository.Delete(asset)
 		if err != nil {

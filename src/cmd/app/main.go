@@ -24,12 +24,12 @@ func main() {
 
 	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository)
 
-	err = tradingPlatformService.ParseAllAssetsIntoDb()
+	err = tradingPlatformService.ParseAllAssetsIntoDB()
 	if err != nil {
 		panic(err)
 	}
 
-	err = tradingPlatformService.ParseAllIndexesIntoDb()
+	err = tradingPlatformService.ParseAllIndexesIntoDB()
 	if err != nil {
 		panic(err)
 	}

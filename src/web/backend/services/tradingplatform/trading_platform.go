@@ -10,8 +10,8 @@ import (
 )
 
 type AssetExchangeService interface {
-	ParseAllAssetsIntoDb() error
-	ParseAllIndexesIntoDb() error
+	ParseAllAssetsIntoDB() error
+	ParseAllIndexesIntoDB() error
 }
 
 type MoexService struct {
@@ -32,7 +32,7 @@ func NewTradingPlatformService(assetRepository repository.AssetRepository, index
 	return newService
 }
 
-func (m *MoexService) ParseAllAssetsIntoDb() error {
+func (m *MoexService) ParseAllAssetsIntoDB() error {
 	var allAssets []*moexmodels.AssetData
 	var err error
 	allAssets, m.time, err = m.parseLatestAssets(getMaxDaysBeforeLatestDate())
@@ -40,10 +40,14 @@ func (m *MoexService) ParseAllAssetsIntoDb() error {
 		return err
 	}
 
-	var allAssetsInDb []*model.Asset
-	allAssetsInDb, err = m.AssetRepository.GetAll()
+	var allAssetsInDB []*model.Asset
+	allAssetsInDB, err = m.AssetRepository.GetAll()
 	if err != nil {
-		return err
+		if errors.Is(err, repository.ErrAssetNotFound) { // If we don't find any assets in DB it's alright
+			err = nil
+		} else {
+			return err
+		}
 	}
 
 	for _, asset := range allAssets {
@@ -57,11 +61,11 @@ func (m *MoexService) ParseAllAssetsIntoDb() error {
 			return err
 		}
 
-		allAssetsInDb = removeAssetByNameFromSlice(allAssetsInDb, newAsset.Name)
+		allAssetsInDB = removeAssetByNameFromSlice(allAssetsInDB, newAsset.Name)
 	}
 
-	if len(allAssetsInDb) > 0 {
-		err = m.removeOldAssetsFromDb(allAssetsInDb)
+	if len(allAssetsInDB) > 0 {
+		err = m.removeOldAssetsFromDB(allAssetsInDB)
 		if err != nil {
 			return err
 		}
@@ -70,7 +74,7 @@ func (m *MoexService) ParseAllAssetsIntoDb() error {
 	return nil
 }
 
-func (m *MoexService) ParseAllIndexesIntoDb() error {
+func (m *MoexService) ParseAllIndexesIntoDB() error {
 	if m.time.IsZero() {
 		return errors.New("assets should be parsed first")
 	}
@@ -80,10 +84,14 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		return err
 	}
 
-	var allIndexesInDb []*model.Index
-	allIndexesInDb, err = m.IndexRepository.GetAll()
+	var allIndexesInDB []*model.Index
+	allIndexesInDB, err = m.IndexRepository.GetAll()
 	if err != nil {
-		return err
+		if errors.Is(err, repository.ErrIndexNotFound) { // If we don't find any indexes in DB it's alright
+			err = nil
+		} else {
+			return err
+		}
 	}
 
 	for _, index := range allIndexes {
@@ -92,14 +100,14 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 		if err != nil {
 			return err
 		}
-		if len(indexAssets) == 0 { // No assets in index (something wrong with index API response)
+		if len(indexAssets) != 0 { // No assets in index (something wrong with index API response so we skip this particular index)
 			continue
 		}
 
 		newAssetsFractionMap := make(map[*model.Asset]float64)
 		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
-			if errors.Is(err, repository.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response)
+			if errors.Is(err, repository.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response so we skip this particular index)
 				continue
 			}
 			return err
@@ -115,11 +123,12 @@ func (m *MoexService) ParseAllIndexesIntoDb() error {
 			return err
 		}
 
-		allIndexesInDb = removeIndexByNameFromSlice(allIndexesInDb, newIndex.Name)
+		allIndexesInDB = removeIndexByNameFromSlice(allIndexesInDB, newIndex.Name)
+
 	}
 
-	if len(allIndexesInDb) > 0 {
-		err = m.removeOldIndexesFromDb(allIndexesInDb)
+	if len(allIndexesInDB) > 0 {
+		err = m.removeOldIndexesFromDB(allIndexesInDB)
 		if err != nil {
 			return err
 		}

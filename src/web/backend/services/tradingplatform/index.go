@@ -65,7 +65,7 @@ func removeIndexByNameFromSlice(indexes []*model.Index, name string) []*model.In
 	return indexes
 }
 
-func (m *MoexService) removeOldIndexesFromDb(indexes []*model.Index) error {
+func (m *MoexService) removeOldIndexesFromDB(indexes []*model.Index) error {
 	for _, index := range indexes {
 		err := m.IndexRepository.Delete(index)
 		if err != nil {
