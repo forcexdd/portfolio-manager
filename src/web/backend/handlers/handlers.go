@@ -357,6 +357,17 @@ func (r *RouteHandler) HandleFollowingIndex(w http.ResponseWriter, request *http
 	}
 }
 
+// TODO move this function to somewhere?????
+func tryFindStockInStocksMap[V any](mp *map[*models.Stock]V, name string) *models.Stock {
+	for stock := range *mp {
+		if stock.Name == name {
+			return stock
+		}
+	}
+
+	return nil
+}
+
 func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, request *http.Request) {
 	switch request.Method {
 	case "POST":
@@ -404,24 +415,13 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 
 		var curStocks []*tableStocks
 
-		// TODO move this function to somewhere?????
-		tryFindStockInPortfolio := func(portfolio *models.Portfolio, name string) *models.Stock {
-			for stock := range portfolio.StocksQuantityMap {
-				if stock.Name == name {
-					return stock
-				}
-			}
-
-			return nil
-		}
-
 		for stock, fraction := range index.StocksFractionMap {
 			tableStock := &tableStocks{
 				Name:              stock.Name,
 				SuggestedFraction: fraction,
 			}
 
-			foundStock := tryFindStockInPortfolio(portfolio, stock.Name)
+			foundStock := tryFindStockInStocksMap(&portfolio.StocksQuantityMap, stock.Name)
 			if foundStock != nil {
 				tableStock.Quantity = portfolio.StocksQuantityMap[foundStock]
 				tableStock.Price = foundStock.Price * float64(tableStock.Quantity)
@@ -433,6 +433,26 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 			}
 
 			tableStock.DifferenceInFraction = tableStock.CurrentFraction - tableStock.SuggestedFraction
+
+			curStocks = append(curStocks, tableStock)
+		}
+
+		for stock := range portfolio.StocksQuantityMap {
+			foundInIndex := tryFindStockInStocksMap(&index.StocksFractionMap, stock.Name)
+			if foundInIndex != nil {
+				continue
+			}
+
+			curFraction := 100 * float64(portfolio.StocksQuantityMap[stock]) * stock.Price / countPriceOfPortfolio(portfolio)
+
+			tableStock := &tableStocks{
+				Name:                 stock.Name,
+				Quantity:             portfolio.StocksQuantityMap[stock],
+				Price:                stock.Price,
+				CurrentFraction:      curFraction,
+				SuggestedFraction:    0,
+				DifferenceInFraction: curFraction,
+			}
 
 			curStocks = append(curStocks, tableStock)
 		}

@@ -1,5 +1,5 @@
-<div id="following-index-table">
-    <table>
+<div>
+    <table id="following-index-table">
         <tr>
             <th>Name</th>
             <th>Quantity</th>
@@ -10,15 +10,19 @@
         </tr>
         {{ range $stock := .stocks }}
         <tr>
-            <td>{{ $stock.Name }}</td>
-            <td>{{ $stock.Quantity }}</td>
-            <td>{{ printf "%.2f" $stock.Price }}</td>
-            <td>{{ printf "%.2f" $stock.CurrentFraction }}</td>
-            <td>{{ printf "%.2f" $stock.SuggestedFraction }}</td>
-            <td>{{ printf "%.2f" $stock.DifferenceInFraction }}</td>
+            <td class="stock-name">{{ $stock.Name }}</td>
+            <td class="stock-quantity">{{ $stock.Quantity }}</td>
+            <td class="stock-price">{{ printf "%.2f" $stock.Price }}</td>
+            <td class="stock-current-fraction">{{ printf "%.2f" $stock.CurrentFraction }}</td>
+            <td class="stock-suggested-fraction">{{ printf "%.2f" $stock.SuggestedFraction }}</td>
+            <td class="stock-difference-in-fraction">{{ printf "%.2f" $stock.DifferenceInFraction }}</td>
+            <td><button class="add-stock-button">+</button></td>
+            <td><button class="remove-stock-button">-</button></td>
         </tr>
         {{ end }}
     </table>
+    <button id="remove-unused-stocks">Remove unused stocks</button>
+    <button id="save-changes">Save changes</button>
     <div>Pls imagine there is a chart, I got no money to do that. I am poor, my family is starving and the team lead is just sitting up there laughing at us, poor junior programmers. Pls God help us, I am begging you.</div>
 </div>
 
