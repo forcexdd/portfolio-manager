@@ -21,7 +21,7 @@ type AssetRepository interface {
 
 	DeleteByName(name string) error
 
-	// GetAll return all records of asset from DB. If there is no assets returns ErrAssetNotFound
+	// GetAll return all records of asset from DB. If there are no assets returns ErrAssetNotFound
 	GetAll() ([]*model.Asset, error)
 }
 
