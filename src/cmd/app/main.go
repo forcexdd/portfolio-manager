@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/services/stock_exchange_service"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 	"log"
 	"time"
 )
@@ -11,7 +11,7 @@ import (
 func main() {
 	start := time.Now()
 
-	const connString = "postgresql://postgres:postgres@localhost:5432/StockPortfolioManager?sslmode=disable"
+	const connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
 
 	db, err := storage.NewStorage(connString)
 	if err != nil {
@@ -19,17 +19,17 @@ func main() {
 	}
 	//db.DeleteStorage()
 
-	stockRepository := repositories.NewStockRepository(db.GetDb())
-	indexRepository := repositories.NewIndexRepository(db.GetDb())
+	assetRepository := repository.NewAssetRepository(db.GetDb())
+	indexRepository := repository.NewIndexRepository(db.GetDb())
 
-	stockExchangeService := stock_exchange_service.NewStockExchangeService(stockRepository, indexRepository)
+	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository)
 
-	err = stockExchangeService.ParseAllStocksIntoDb()
+	err = tradingPlatformService.ParseAllAssetsIntoDB()
 	if err != nil {
 		panic(err)
 	}
 
-	err = stockExchangeService.ParseAllIndexesIntoDb()
+	err = tradingPlatformService.ParseAllIndexesIntoDB()
 	if err != nil {
 		panic(err)
 	}

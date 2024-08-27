@@ -1,4 +1,4 @@
-package moex_api_client
+package client
 
 type MoexApiClient struct {
 	BaseUrl string
