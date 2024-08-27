@@ -1,4 +1,4 @@
-module github.com/forcexdd/StockPortfolioManager
+module github.com/forcexdd/portfoliomanager
 
 go 1.22.5
 

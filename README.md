@@ -1,1 +1,1 @@
-# StockPortfolioManager
+# Portfolio manager

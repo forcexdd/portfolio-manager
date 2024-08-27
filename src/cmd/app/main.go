@@ -1,14 +1,18 @@
 package main
 
 import (
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/repositories"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/database/storage"
-	"github.com/forcexdd/StockPortfolioManager/src/web/backend/handlers"
-	"net/http"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/handlers"
+	"log"
+	"time"
 )
 
 func main() {
-	const connString = "postgresql://postgres:postgres@localhost:5432/StockPortfolioManager?sslmode=disable"
+	start := time.Now()
+
+	const connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
 
 	db, err := storage.NewStorage(connString)
 	if err != nil {
@@ -19,11 +23,11 @@ func main() {
 	//	panic(err)
 	//}
 
-	stockRepository := repositories.NewStockRepository(db.GetDb())
-	indexRepository := repositories.NewIndexRepository(db.GetDb())
-	portfolioRepository := repositories.NewPortfolioRepository(db.GetDb())
+	assetRepository := repository.NewAssetRepository(db.GetDb())
+	indexRepository := repository.NewIndexRepository(db.GetDb())
+	portfolioRepository := repository.NewPortfolioRepository(db.GetDb())
 
-	routeHandler := handlers.NewRouteHandler(portfolioRepository, stockRepository, indexRepository)
+	routeHandler := handlers.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
 
 	http.HandleFunc("/static/", routeHandler.HandleStaticFiles)
 	http.HandleFunc("/", routeHandler.HandleHome)
@@ -39,4 +43,6 @@ func main() {
 	if err = db.CloseConnection(); err != nil {
 		panic(err)
 	}
+
+	log.Println("Time passed: ", time.Since(start))
 }
