@@ -1,4 +1,5 @@
 import * as validators from './validators.mjs';
+import * as constants from "./const.mjs";
 
 let addAssetsButtonHTML = document.getElementById("addAssetButton");
 let assetNameInputHTML = document.getElementById("selectAssets");
@@ -107,9 +108,9 @@ submitButtonHTML.onclick = async (e) => {
     }
 
     let formData = new FormData();
-    formData.append("portfolioName", portfolioNameHTML.value);
+    formData.append(constants.portfolioNameFormKey, portfolioNameHTML.value);
     assets.forEach(assets => {
-        formData.append("assets[]", JSON.stringify(assets));
+        formData.append(constants.allAssetsFormKey, JSON.stringify(assets));
     });
 
     try {

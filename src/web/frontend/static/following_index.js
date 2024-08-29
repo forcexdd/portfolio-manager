@@ -1,5 +1,6 @@
 // import * as validators from "./validators.mjs";
-import * as Cookies from "./cookies.mjs";
+import * as cookies from "./cookies.mjs";
+import * as constants from "./const.mjs"
 
 let renderButtonHTML = document.getElementById("renderTable");
 // let budgetInputHTML = document.getElementById("budgetInput");
@@ -55,7 +56,7 @@ function saveChanges() {
     }
     let formData = new FormData();
     formData.append("assets[]", JSON.stringify(assets));
-    formData.append("portfolioName", Cookies.getCookie("current_portfolio"));
+    formData.append("portfolioName", cookies.getCookie(constants.portfolioNameCookie));
     fetch("/update_portfolio", {
         method: "POST",
         body: formData
@@ -103,7 +104,7 @@ renderButtonHTML.onclick = (e) => {
     let formData = new FormData();
     formData.append("index", index);
     // formData.append("budget", budget);
-    formData.append("portfolio", Cookies.getCookie("current_portfolio"));
+    formData.append(constants.portfolioNameFormKey, cookies.getCookie(constants.portfolioNameCookie));
 
     fetch("/render_following_index_table", {
         method: "POST",

@@ -1,4 +1,5 @@
-import * as Cookies from "./cookies.mjs";
+import * as cookies from "./cookies.mjs";
+import * as constants from "./const.mjs";
 
 let optionsHTML = document.getElementById("options");
 
@@ -45,12 +46,12 @@ let portfolioSelectionHTML = document.getElementById("portfolios");
 chooseRightPortfolio(portfolioSelectionHTML);
 
 portfolioSelectionHTML.onchange = (e) => {
-    document.cookie = `current_portfolio=${portfolioSelectionHTML.value}`;
+    document.cookie = `${constants.portfolioNameCookie}=${portfolioSelectionHTML.value}`;
     location.reload();
 };
 
 function chooseRightPortfolio(portfolioHTML) {
-    let cookie = Cookies.getCookie("current_portfolio");
+    let cookie = cookies.getCookie(constants.portfolioNameCookie);
     if (!cookie)
         portfolioHTML.value = "select";
     else
