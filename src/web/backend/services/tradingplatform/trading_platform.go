@@ -16,7 +16,7 @@ type AssetExchangeService interface {
 	ParseAllIndexesIntoDB() error
 }
 
-type MoexService struct {
+type moexService struct {
 	AssetRepository repository.AssetRepository
 	IndexRepository repository.IndexRepository
 	moexApiClient   *client.MoexApiClient
@@ -24,7 +24,7 @@ type MoexService struct {
 }
 
 func NewTradingPlatformService(assetRepository repository.AssetRepository, indexRepository repository.IndexRepository) AssetExchangeService {
-	newService := &MoexService{
+	newService := &moexService{
 		AssetRepository: assetRepository,
 		IndexRepository: indexRepository,
 		time:            time.Time{},
@@ -34,7 +34,7 @@ func NewTradingPlatformService(assetRepository repository.AssetRepository, index
 	return newService
 }
 
-func (m *MoexService) ParseAllAssetsIntoDB() error {
+func (m *moexService) ParseAllAssetsIntoDB() error {
 	var allAssets []*moexmodels.AssetData
 	var err error
 	allAssets, m.time, err = m.parseLatestAssets(maxDaysBeforeLatestDate)
@@ -76,7 +76,7 @@ func (m *MoexService) ParseAllAssetsIntoDB() error {
 	return nil
 }
 
-func (m *MoexService) ParseAllIndexesIntoDB() error {
+func (m *moexService) ParseAllIndexesIntoDB() error {
 	if m.time.IsZero() {
 		return errors.New("assets should be parsed first")
 	}
@@ -139,7 +139,7 @@ func (m *MoexService) ParseAllIndexesIntoDB() error {
 	return nil
 }
 
-func (m *MoexService) setApiClient() {
+func (m *moexService) setApiClient() {
 	m.moexApiClient = client.NewMoexApiClient()
 }
 

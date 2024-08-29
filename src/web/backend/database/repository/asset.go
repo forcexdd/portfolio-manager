@@ -25,15 +25,15 @@ type AssetRepository interface {
 	GetAll() ([]*model.Asset, error)
 }
 
-type PostgresAssetRepository struct {
+type postgresAssetRepository struct {
 	db *sql.DB
 }
 
 func NewAssetRepository(db *sql.DB) AssetRepository {
-	return &PostgresAssetRepository{db: db}
+	return &postgresAssetRepository{db: db}
 }
 
-func (p *PostgresAssetRepository) Create(asset *model.Asset) error {
+func (p *postgresAssetRepository) Create(asset *model.Asset) error {
 	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (p *PostgresAssetRepository) Create(asset *model.Asset) error {
 	return err
 }
 
-func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
+func (p *postgresAssetRepository) GetByName(name string) (*model.Asset, error) {
 	assetID, err := getAssetIDByName(p.db, name)
 	if err != nil {
 		return nil, err
@@ -68,7 +68,7 @@ func (p *PostgresAssetRepository) GetByName(name string) (*model.Asset, error) {
 	}, nil
 }
 
-func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
+func (p *postgresAssetRepository) Update(asset *model.Asset) error {
 	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (p *PostgresAssetRepository) Update(asset *model.Asset) error {
 	return err
 }
 
-func (p *PostgresAssetRepository) Delete(asset *model.Asset) error {
+func (p *postgresAssetRepository) Delete(asset *model.Asset) error {
 	assetID, err := getAssetIDByName(p.db, asset.Name)
 	if err != nil {
 		return err
@@ -101,11 +101,11 @@ func (p *PostgresAssetRepository) Delete(asset *model.Asset) error {
 	return err
 }
 
-func (p *PostgresAssetRepository) DeleteByName(name string) error {
+func (p *postgresAssetRepository) DeleteByName(name string) error {
 	return p.Delete(&model.Asset{Name: name}) // Price doesn't matter
 }
 
-func (p *PostgresAssetRepository) GetAll() ([]*model.Asset, error) {
+func (p *postgresAssetRepository) GetAll() ([]*model.Asset, error) {
 	dtoAssets, err := getAllAssets(p.db)
 	if err != nil {
 		return nil, err

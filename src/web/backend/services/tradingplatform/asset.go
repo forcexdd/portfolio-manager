@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func (m *MoexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, time.Time, error) {
+func (m *moexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, time.Time, error) {
 	parseTime := getCurrentTime()
 
 	allAssets, err := m.moexApiClient.GetAllAssets(formatTime(parseTime))
@@ -31,7 +31,7 @@ func (m *MoexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, t
 	return allAssets, parseTime, nil
 }
 
-func (m *MoexService) createOrUpdateAsset(asset *model.Asset) error {
+func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 	_, err := m.AssetRepository.GetByName(asset.Name)
 	if err != nil {
 		if errors.Is(err, repository.ErrAssetNotFound) { // Can't find asset in database
@@ -61,7 +61,7 @@ func removeAssetByNameFromSlice(assets []*model.Asset, name string) []*model.Ass
 	return assets
 }
 
-func (m *MoexService) removeOldAssetsFromDB(assets []*model.Asset) error {
+func (m *moexService) removeOldAssetsFromDB(assets []*model.Asset) error {
 	for _, asset := range assets {
 		err := m.AssetRepository.Delete(asset)
 		if err != nil {

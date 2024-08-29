@@ -27,15 +27,15 @@ type PortfolioRepository interface {
 	GetAll() ([]*model.Portfolio, error)
 }
 
-type PostgresPortfolioRepository struct {
+type postgresPortfolioRepository struct {
 	db *sql.DB
 }
 
 func NewPortfolioRepository(db *sql.DB) PortfolioRepository {
-	return &PostgresPortfolioRepository{db: db}
+	return &postgresPortfolioRepository{db: db}
 }
 
-func (p *PostgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
+func (p *postgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (p *PostgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 	return err
 }
 
-func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, error) {
+func (p *postgresPortfolioRepository) GetByName(name string) (*model.Portfolio, error) {
 	portfolioID, err := getPortfolioIDByName(p.db, name)
 	if err != nil {
 		return nil, err
@@ -76,7 +76,7 @@ func (p *PostgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 	}, nil
 }
 
-func (p *PostgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
+func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (p *PostgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 	return err
 }
 
-func (p *PostgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
+func (p *postgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
 		return err
@@ -126,11 +126,11 @@ func (p *PostgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
 	return err
 }
 
-func (p *PostgresPortfolioRepository) DeleteByName(name string) error {
+func (p *postgresPortfolioRepository) DeleteByName(name string) error {
 	return p.Delete(&model.Portfolio{Name: name, AssetsQuantityMap: nil})
 }
 
-func (p *PostgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
+func (p *postgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	dtoPortfolios, err := getAllPortfolios(p.db)
 	if err != nil {
 		return nil, err
@@ -158,7 +158,7 @@ func (p *PostgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	return portfolios, nil
 }
 
-func (p *PostgresPortfolioRepository) getAssetsQuantityMapByPortfolioID(portfolioID int) (map[*model.Asset]int, error) {
+func (p *postgresPortfolioRepository) getAssetsQuantityMapByPortfolioID(portfolioID int) (map[*model.Asset]int, error) {
 	portfolioAssets, err := getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (p *PostgresPortfolioRepository) getAssetsQuantityMapByPortfolioID(portfoli
 	return assetsQuantityMap, nil
 }
 
-func (p *PostgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, assetsQuantityMap map[*model.Asset]int) error {
+func (p *postgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, assetsQuantityMap map[*model.Asset]int) error {
 	assetsIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap)
 	if err != nil {
 		return err
@@ -211,7 +211,7 @@ func (p *PostgresPortfolioRepository) addManyAssetsToPortfolio(portfolioID int, 
 	return nil
 }
 
-func (p *PostgresPortfolioRepository) addOrUpdateNewPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
+func (p *postgresPortfolioRepository) addOrUpdateNewPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
 	for assetID, quantity := range newAssetIDQuantityMap {
 		_, assetExists := oldAssetIDQuantityMap[assetID]
 
@@ -231,7 +231,7 @@ func (p *PostgresPortfolioRepository) addOrUpdateNewPortfolioAssets(portfolioID 
 	return nil
 }
 
-func (p *PostgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, quantity int) error {
+func (p *postgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, quantity int) error {
 	portfolioAsset, err := createPortfolioAsset(p.db, portfolioID, assetID)
 	if err != nil {
 		return err
@@ -242,7 +242,7 @@ func (p *PostgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, 
 	return err
 }
 
-func (p *PostgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID, quantity int) error {
+func (p *postgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID, quantity int) error {
 	portfolioAssetID, err := getPortfolioAssetIDByPortfolioIdAndAssetID(p.db, portfolioID, assetID)
 	if err != nil {
 		return err
@@ -259,7 +259,7 @@ func (p *PostgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID,
 	return err
 }
 
-func (p *PostgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
+func (p *postgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
 	for assetID, _ := range oldAssetIDQuantityMap {
 		_, assetExists := newAssetIDQuantityMap[assetID]
 		if !assetExists {
@@ -273,7 +273,7 @@ func (p *PostgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, 
 	return nil
 }
 
-func (p *PostgresPortfolioRepository) deleteAssetFromTablesConnectedToPortfolio(portfolioID int, assetID int) error {
+func (p *postgresPortfolioRepository) deleteAssetFromTablesConnectedToPortfolio(portfolioID int, assetID int) error {
 	portfolioAssetID, err := getPortfolioAssetIDByPortfolioIdAndAssetID(p.db, portfolioID, assetID)
 	if err != nil {
 		return err
@@ -295,7 +295,7 @@ func (p *PostgresPortfolioRepository) deleteAssetFromTablesConnectedToPortfolio(
 	return err
 }
 
-func (p *PostgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID int) error {
+func (p *postgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID int) error {
 	portfolioAssets, err := getAllPortfolioAssetsByPortfolioID(p.db, portfolioID)
 	if err != nil {
 		return err
@@ -322,7 +322,7 @@ func (p *PostgresPortfolioRepository) deleteAllAssetsFromPortfolio(portfolioID i
 	return nil
 }
 
-func (p *PostgresPortfolioRepository) convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[*model.Asset]int) (map[int]int, error) {
+func (p *postgresPortfolioRepository) convertAssetsQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[*model.Asset]int) (map[int]int, error) {
 	assetsNameQuantityMap := make(map[string]int)
 	for asset, quantity := range assetsQuantityMap {
 		assetsNameQuantityMap[asset.Name] = quantity
@@ -336,7 +336,7 @@ func (p *PostgresPortfolioRepository) convertAssetsQuantityMapToAssetsIDQuantity
 	return assetsIDQuantityMap, nil
 }
 
-func (p *PostgresPortfolioRepository) convertAssetsNameQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[string]int) (map[int]int, error) {
+func (p *postgresPortfolioRepository) convertAssetsNameQuantityMapToAssetsIDQuantityMap(assetsQuantityMap map[string]int) (map[int]int, error) {
 	assetsIDQuantityMap := make(map[int]int)
 	for assetName, quantity := range assetsQuantityMap {
 		assetID, err := getAssetIDByName(p.db, assetName)
