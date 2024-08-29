@@ -52,7 +52,7 @@ func (s *Storage) CloseConnection() error {
 	return s.db.Close()
 }
 
-func (s *Storage) GetDb() *sql.DB {
+func (s *Storage) GetDB() *sql.DB {
 	return s.db
 }
 

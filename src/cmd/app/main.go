@@ -19,8 +19,8 @@ func main() {
 	}
 	//db.DeleteStorage()
 
-	assetRepository := repository.NewAssetRepository(db.GetDb())
-	indexRepository := repository.NewIndexRepository(db.GetDb())
+	assetRepository := repository.NewAssetRepository(db.GetDB())
+	indexRepository := repository.NewIndexRepository(db.GetDB())
 
 	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository)
 
