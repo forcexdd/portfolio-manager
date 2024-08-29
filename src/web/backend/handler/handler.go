@@ -1,4 +1,4 @@
-package handlers
+package handler
 
 import (
 	"encoding/base64"
@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/services/chart_drawer"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/drawer/chart"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -215,7 +215,7 @@ func (r *RouteHandler) HandleManager(w http.ResponseWriter, request *http.Reques
 		return
 	}
 
-	pieChart, err := chart_drawer.GetAssetPieChart(portfolio)
+	pieChart, err := chart.GetAssetPieChart(portfolio)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}

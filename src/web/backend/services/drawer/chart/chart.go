@@ -1,4 +1,4 @@
-package chart_drawer
+package chart
 
 import (
 	"bytes"

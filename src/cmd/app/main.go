@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/handlers"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
 	"log"
 	"net/http"
 	"time"
@@ -27,7 +27,7 @@ func main() {
 	indexRepository := repository.NewIndexRepository(db.GetDb())
 	portfolioRepository := repository.NewPortfolioRepository(db.GetDb())
 
-	routeHandler := handlers.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
+	routeHandler := handler.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
 
 	http.HandleFunc("/static/", routeHandler.HandleStaticFiles)
 	http.HandleFunc("/", routeHandler.HandleHome)
