@@ -20,7 +20,7 @@ func NewLogger() Logger {
 	newLogger := &slogger{
 		logger: slog.New(slog.NewTextHandler(os.Stdout, nil)),
 	}
-	slog.SetDefault(newLogger.logger)
+	//slog.SetDefault(newLogger.logger)
 
 	return newLogger
 }

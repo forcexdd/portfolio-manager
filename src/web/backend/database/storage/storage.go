@@ -55,6 +55,7 @@ func (s *Storage) openConnection() error {
 	}
 
 	s.db = db
+	s.log.Info("Connected to DB")
 
 	return nil
 }
@@ -65,6 +66,8 @@ func (s *Storage) CloseConnection() error {
 		s.log.Error("Failed closing DB")
 		return err
 	}
+
+	s.log.Info("Closed connection with DB")
 
 	return nil
 }
@@ -149,7 +152,7 @@ func (s *Storage) dropAllTables() error {
 	for _, table := range s.tablesOrder {
 		err := s.DropTable(table)
 		if err != nil {
-			s.log.Error("Failed dropping table: ", table)
+			s.log.Error("Failed dropping table", "name", table)
 			return err
 		}
 	}
@@ -161,7 +164,7 @@ func (s *Storage) addAllTables() error {
 	for _, table := range s.tablesOrder {
 		err := s.CreateTable(table)
 		if err != nil {
-			s.log.Error("Failed creating table: ", table)
+			s.log.Error("Failed creating table", "name", table)
 			return err
 		}
 	}
@@ -172,14 +175,14 @@ func (s *Storage) addAllTables() error {
 func (s *Storage) DropTable(tableName string) error {
 	_, isTable := s.allTables[tableName]
 	if !isTable {
-		s.log.Warn("Table does not exists: ", tableName)
+		s.log.Warn("Table does not exists", "name", tableName)
 		return errors.New("table not found")
 	}
 
 	query := "DROP TABLE IF EXISTS " + tableName + " CASCADE;"
 	_, err := s.db.Exec(query)
 	if err != nil {
-		s.log.Error("Failed dropping table: ", tableName)
+		s.log.Error("Failed dropping table", "name", tableName)
 		return err
 	}
 
@@ -189,13 +192,13 @@ func (s *Storage) DropTable(tableName string) error {
 func (s *Storage) CreateTable(tableName string) error {
 	query, isTable := s.allTables[tableName]
 	if !isTable {
-		s.log.Warn("Table does not exists: ", tableName)
+		s.log.Warn("Table does not exists", "name", tableName)
 		return errors.New("table not found")
 	}
 
 	_, err := s.db.Exec(query)
 	if err != nil {
-		s.log.Error("Failed creating table: ", tableName)
+		s.log.Error("Failed creating table", "name", tableName)
 		return err
 	}
 

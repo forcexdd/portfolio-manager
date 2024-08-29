@@ -40,5 +40,5 @@ func main() {
 		panic(err)
 	}
 
-	log.Info("App closed. Time passed: ", time.Since(start))
+	log.Info("App closed", "time passed", time.Since(start))
 }

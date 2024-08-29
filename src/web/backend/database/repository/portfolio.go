@@ -43,28 +43,28 @@ func NewPortfolioRepository(db *sql.DB, log logger.Logger) PortfolioRepository {
 func (p *postgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
-		p.log.Error("Failed to get portfolioID by name: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to get portfolioID by name", "name", portfolio.Name, "error", err)
 		return err
 	}
 	if portfolioID != 0 {
-		p.log.Error("Portfolio already exists in DB: ", portfolio.Name)
+		p.log.Error("Portfolio already exists in DB", "name", portfolio.Name)
 		return ErrPortfolioAlreadyExists
 	}
 
 	var createdPortfolio *dtomodel.Portfolio
 	createdPortfolio, err = createPortfolio(p.db, portfolio.Name)
 	if err != nil {
-		p.log.Error("Failed to create portfolio: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to create portfolio", "name", portfolio.Name, "error", err)
 		return err
 	}
 	if portfolio.AssetsQuantityMap == nil {
-		p.log.Warn("Portfolio does not gave associated assets: ", portfolio.Name)
+		p.log.Warn("Portfolio does not gave associated assets", "name", portfolio.Name)
 		return nil
 	} // If there are no assets just create name
 
 	err = p.addManyAssetsToPortfolio(createdPortfolio.ID, portfolio.AssetsQuantityMap)
 	if err != nil {
-		p.log.Error("Failed to add assets to portfolio: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to add assets to portfolio", "name", portfolio.Name, "error", err)
 		return err
 	}
 
@@ -74,18 +74,18 @@ func (p *postgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 func (p *postgresPortfolioRepository) GetByName(name string) (*model.Portfolio, error) {
 	portfolioID, err := getPortfolioIDByName(p.db, name)
 	if err != nil {
-		p.log.Error("Failed to get portfolioID by name: ", name, ", error: ", err)
+		p.log.Error("Failed to get portfolioID by name", "name", name, "error", err)
 		return nil, err
 	}
 	if portfolioID == 0 {
-		p.log.Warn("Portfolio does not exist in DB: ", name)
+		p.log.Warn("Portfolio does not exist in DB", "name", name)
 		return nil, ErrPortfolioNotFound
 	}
 
 	assetsQuantityMap := make(map[*model.Asset]int)
 	assetsQuantityMap, err = p.getAssetsQuantityMapByPortfolioID(portfolioID)
 	if err != nil {
-		p.log.Error("Failed to get assets associated to portfolioID: ", portfolioID, ", error: ", err)
+		p.log.Error("Failed to get assets associated to portfolioID", "ID", portfolioID, "error", err)
 		return nil, err
 	}
 
@@ -98,18 +98,18 @@ func (p *postgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
-		p.log.Error("Failed to get portfolioID by name: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to get portfolioID by name", "name", portfolio.Name, "error", err)
 		return err
 	}
 	if portfolioID == 0 {
-		p.log.Warn("Portfolio does not exist in DB: ", portfolio.Name)
+		p.log.Warn("Portfolio does not exist in DB", "name", portfolio.Name)
 		return ErrPortfolioNotFound
 	}
 
 	var oldPortfolio *model.Portfolio
 	oldPortfolio, err = p.GetByName(portfolio.Name)
 	if err != nil {
-		p.log.Error("Failed to get portfolio by name: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to get portfolio by name", "name", portfolio.Name, "error", err)
 		return err
 	}
 
@@ -121,13 +121,13 @@ func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 
 	err = p.addOrUpdateNewPortfolioAssets(portfolioID, oldAssetIDQuantityMap, newAssetIDQuantityMap)
 	if err != nil {
-		p.log.Error("Failed to update portfolio assets: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to update portfolio assets", "name", portfolio.Name, "error", err)
 		return err
 	}
 
 	err = p.deleteOldPortfolioAssets(portfolioID, oldAssetIDQuantityMap, newAssetIDQuantityMap)
 	if err != nil {
-		p.log.Error("Failed to delete portfolio assets: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to delete portfolio assets", "name", portfolio.Name, "error", err)
 		return err
 	}
 
@@ -137,23 +137,23 @@ func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 func (p *postgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
 	portfolioID, err := getPortfolioIDByName(p.db, portfolio.Name)
 	if err != nil {
-		p.log.Error("Failed to get portfolioID by name: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to get portfolioID by name", "name", portfolio.Name, "error", err)
 		return err
 	}
 	if portfolioID == 0 {
-		p.log.Warn("Portfolio does not exist in DB: ", portfolio.Name)
+		p.log.Warn("Portfolio does not exist in DB", "name", portfolio.Name)
 		return ErrPortfolioNotFound
 	}
 
 	err = p.deleteAllAssetsFromPortfolio(portfolioID)
 	if err != nil {
-		p.log.Error("Failed to delete all assets from portfolio: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to delete all assets from portfolio", "name", portfolio.Name, "error", err)
 		return err
 	}
 
 	err = deletePortfolio(p.db, portfolioID)
 	if err != nil {
-		p.log.Error("Failed to delete portfolio: ", portfolio.Name, ", error: ", err)
+		p.log.Error("Failed to delete portfolio", "name", portfolio.Name, "error", err)
 		return err
 	}
 
@@ -167,7 +167,7 @@ func (p *postgresPortfolioRepository) DeleteByName(name string) error {
 func (p *postgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	dtoPortfolios, err := getAllPortfolios(p.db)
 	if err != nil {
-		p.log.Error("Failed to get all portfolios, error: ", err)
+		p.log.Error("Failed to get all portfolios", "error", err)
 		return nil, err
 	}
 	if len(dtoPortfolios) == 0 {
@@ -180,7 +180,7 @@ func (p *postgresPortfolioRepository) GetAll() ([]*model.Portfolio, error) {
 	for _, dtoPortfolio := range dtoPortfolios {
 		portfolio, err = p.GetByName(dtoPortfolio.Name)
 		if err != nil {
-			p.log.Error("Failed to get portfolio by name: ", dtoPortfolio.Name)
+			p.log.Error("Failed to get portfolio by name", "name", dtoPortfolio.Name)
 			return nil, err
 		}
 
@@ -275,8 +275,12 @@ func (p *postgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, 
 	}
 
 	_, err = createPortfolioAssetRelationship(p.db, portfolioAsset.ID, quantity)
+	if err != nil {
+		return err
+	}
+	p.log.Info("Added asset to portfolio", "asset ID", assetID, "portfolio ID", portfolioID)
 
-	return err
+	return nil
 }
 
 func (p *postgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID, quantity int) error {
@@ -292,8 +296,12 @@ func (p *postgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID,
 	}
 
 	err = updatePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID, quantity)
+	if err != nil {
+		return err
+	}
+	p.log.Info("Updated asset in portfolio", "asset ID", assetID, "portfolio ID", portfolioID)
 
-	return err
+	return nil
 }
 
 func (p *postgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {

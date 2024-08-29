@@ -28,6 +28,13 @@ func (m *moexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, t
 		maxDays--
 	}
 
+	if maxDays == 0 {
+		m.log.Error("Exceeded limit on max days before latest date")
+		return nil, time.Time{}, errors.New("exceeded limit on max days before latest date")
+	}
+
+	m.log.Info("Parsing date", "date", formatTime(parseTime))
+
 	return allAssets, parseTime, nil
 }
 
@@ -39,6 +46,7 @@ func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 			if err != nil {
 				return err
 			}
+			m.log.Info("Created asset", "name", asset.Name)
 		}
 		return err
 	} else { // Found already existing asset in database
@@ -46,6 +54,7 @@ func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 		if err != nil {
 			return err
 		}
+		m.log.Info("Updated asset", "name", asset.Name)
 	}
 
 	return nil
@@ -67,6 +76,7 @@ func (m *moexService) removeOldAssetsFromDB(assets []*model.Asset) error {
 		if err != nil {
 			return err
 		}
+		m.log.Info("Removed asset", "name", asset.Name)
 	}
 
 	return nil

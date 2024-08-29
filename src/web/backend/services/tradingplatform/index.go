@@ -5,7 +5,6 @@ import (
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
-	"log"
 	"time"
 )
 
@@ -26,6 +25,7 @@ func (m *moexService) createOrUpdateIndex(index *model.Index) error {
 			if err != nil {
 				return err
 			}
+			m.log.Info("Created index", "name", index.Name)
 		}
 		return err
 	} else { // Found already existing index in database
@@ -33,6 +33,7 @@ func (m *moexService) createOrUpdateIndex(index *model.Index) error {
 		if err != nil {
 			return err
 		}
+		m.log.Info("Updated index", "name", index.Name)
 	}
 
 	return nil
@@ -44,9 +45,6 @@ func (m *moexService) createAssetsFractionMapFromIndexAssets(indexAssets []*moex
 		asset, err := m.AssetRepository.GetByName(indexAsset.SecIDs)
 		if err != nil {
 			return nil, err
-		}
-		if asset == nil {
-			log.Printf("Asset %s does not exist", indexAsset.SecIDs)
 		}
 
 		newAssetsFractionMap[asset] = indexAsset.Weight
@@ -71,6 +69,7 @@ func (m *moexService) removeOldIndexesFromDB(indexes []*model.Index) error {
 		if err != nil {
 			return err
 		}
+		m.log.Info("Removed index", "name", index.Name)
 	}
 
 	return nil

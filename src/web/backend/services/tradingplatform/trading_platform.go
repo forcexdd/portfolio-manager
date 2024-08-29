@@ -2,6 +2,7 @@ package tradingplatform
 
 import (
 	"errors"
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/client"
@@ -21,13 +22,15 @@ type moexService struct {
 	IndexRepository repository.IndexRepository
 	moexApiClient   *client.MoexApiClient
 	time            time.Time
+	log             logger.Logger
 }
 
-func NewTradingPlatformService(assetRepository repository.AssetRepository, indexRepository repository.IndexRepository) AssetExchangeService {
+func NewTradingPlatformService(assetRepository repository.AssetRepository, indexRepository repository.IndexRepository, log logger.Logger) AssetExchangeService {
 	newService := &moexService{
 		AssetRepository: assetRepository,
 		IndexRepository: indexRepository,
 		time:            time.Time{},
+		log:             log,
 	}
 	newService.setApiClient()
 
@@ -39,6 +42,7 @@ func (m *moexService) ParseAllAssetsIntoDB() error {
 	var err error
 	allAssets, m.time, err = m.parseLatestAssets(maxDaysBeforeLatestDate)
 	if err != nil {
+		m.log.Error("Failed parsing latest assets", "error", err)
 		return err
 	}
 
@@ -48,6 +52,7 @@ func (m *moexService) ParseAllAssetsIntoDB() error {
 		if errors.Is(err, repository.ErrAssetNotFound) { // If we don't find any assets in DB it's alright
 			err = nil
 		} else {
+			m.log.Error("Failed getting all assets from DB", "error", err)
 			return err
 		}
 	}
@@ -78,11 +83,13 @@ func (m *moexService) ParseAllAssetsIntoDB() error {
 
 func (m *moexService) ParseAllIndexesIntoDB() error {
 	if m.time.IsZero() {
+		m.log.Warn("All assets have not been parsed yet")
 		return errors.New("assets should be parsed first")
 	}
 
 	allIndexes, err := m.moexApiClient.GetAllIndexes()
 	if err != nil {
+		m.log.Error("Failed getting all indexes", "error", err)
 		return err
 	}
 
@@ -100,9 +107,11 @@ func (m *moexService) ParseAllIndexesIntoDB() error {
 		var indexAssets []*moexmodels.IndexAssetsData
 		indexAssets, err = m.parseIndexAssets(index, m.time)
 		if err != nil {
+			m.log.Error("Failed parsing assets associated with index", "name", index.IndexID, "error", err)
 			return err
 		}
 		if len(indexAssets) != 0 { // No assets in index (something wrong with index API response so we skip this particular index)
+			m.log.Warn("No assets in index", "name", index.IndexID)
 			continue
 		}
 
@@ -110,6 +119,7 @@ func (m *moexService) ParseAllIndexesIntoDB() error {
 		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
 			if errors.Is(err, repository.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response so we skip this particular index)
+				m.log.Warn("No asset from index in DB", "name", index.IndexID)
 				continue
 			}
 			return err
