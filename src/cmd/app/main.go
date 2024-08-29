@@ -1,28 +1,29 @@
 package main
 
 import (
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
-	"log"
 	"time"
 )
 
 func main() {
 	start := time.Now()
 
+	log := logger.NewLogger()
 	const connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
 
-	db, err := storage.NewStorage(connString)
+	db, err := storage.NewStorage(connString, log)
 	if err != nil {
 		panic(err)
 	}
 	//db.DeleteStorage()
 
-	assetRepository := repository.NewAssetRepository(db.GetDB())
-	indexRepository := repository.NewIndexRepository(db.GetDB())
+	assetRepository := repository.NewAssetRepository(db.GetDB(), log)
+	indexRepository := repository.NewIndexRepository(db.GetDB(), log)
 
-	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository)
+	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository, log)
 
 	err = tradingPlatformService.ParseAllAssetsIntoDB()
 	if err != nil {
@@ -39,5 +40,5 @@ func main() {
 		panic(err)
 	}
 
-	log.Println("Time passed: ", time.Since(start))
+	log.Info("App closed. Time passed: ", time.Since(start))
 }
