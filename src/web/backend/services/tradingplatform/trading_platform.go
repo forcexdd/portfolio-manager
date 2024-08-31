@@ -108,7 +108,7 @@ func (m *moexService) ParseAllIndexesIntoDB() error {
 			m.log.Error("Failed parsing assets associated with index", "name", index.IndexID, "error", err)
 			return err
 		}
-		if len(indexAssets) != 0 { // No assets in index (something wrong with index API response so we skip this particular index)
+		if len(indexAssets) == 0 { // No assets in index (something wrong with index API response so we skip this particular index)
 			m.log.Warn("No assets in index", "name", index.IndexID)
 			continue
 		}

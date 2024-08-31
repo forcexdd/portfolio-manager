@@ -1,4 +1,6 @@
 package tradingplatform
 
-const maxDaysBeforeLatestDate = 15
-const minDaysBeforeLatestDate = 2
+const (
+	maxDaysBeforeLatestDate = 15
+	minDaysBeforeLatestDate = 0
+)
