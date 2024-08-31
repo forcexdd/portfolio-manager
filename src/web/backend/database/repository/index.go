@@ -68,6 +68,8 @@ func (p *postgresIndexRepository) Create(index *model.Index) error {
 		return err
 	}
 
+	p.log.Info("Created index", "name", index.Name)
+
 	return nil
 }
 
@@ -131,6 +133,8 @@ func (p *postgresIndexRepository) Update(index *model.Index) error {
 		return err
 	}
 
+	p.log.Info("Updated index", "name", index.Name)
+
 	return nil
 }
 
@@ -156,6 +160,8 @@ func (p *postgresIndexRepository) Delete(index *model.Index) error {
 		p.log.Error("Failed to delete index", "name", index.Name, "error", err)
 		return err
 	}
+
+	p.log.Info("Removed index", "name", index.Name)
 
 	return nil
 }
@@ -278,7 +284,6 @@ func (p *postgresIndexRepository) addAssetToIndex(indexID int, assetID int, frac
 	if err != nil {
 		return err
 	}
-	p.log.Info("Added asset to index", "asset ID", assetID, "index ID", indexID)
 
 	return nil
 }
@@ -295,11 +300,12 @@ func (p *postgresIndexRepository) updateIndexAsset(indexID, assetID int, fractio
 		return err
 	}
 
-	err = updateIndexAssetRelationship(p.db, indexAssetRelationship.ID, fraction)
-	if err != nil {
-		return err
+	if indexAssetRelationship.Fraction != fraction {
+		err = updateIndexAssetRelationship(p.db, indexAssetRelationship.ID, fraction)
+		if err != nil {
+			return err
+		}
 	}
-	p.log.Info("Updated asset in index", "asset ID", assetID, "index ID", indexID)
 
 	return nil
 }

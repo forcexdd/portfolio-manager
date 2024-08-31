@@ -53,7 +53,6 @@ func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 			if err != nil {
 				return err
 			}
-			m.log.Info("Created asset", "name", asset.Name)
 		}
 		return err
 	} else { // Found already existing asset in database
@@ -61,7 +60,6 @@ func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 		if err != nil {
 			return err
 		}
-		m.log.Info("Updated asset", "name", asset.Name)
 	}
 
 	return nil
@@ -83,7 +81,6 @@ func (m *moexService) removeOldAssetsFromDB(assets []*model.Asset) error {
 		if err != nil {
 			return err
 		}
-		m.log.Info("Removed asset", "name", asset.Name)
 	}
 
 	return nil

@@ -2,5 +2,5 @@ package tradingplatform
 
 const (
 	maxDaysBeforeLatestDate = 15
-	minDaysBeforeLatestDate = 0
+	minDaysBeforeLatestDate = 2
 )

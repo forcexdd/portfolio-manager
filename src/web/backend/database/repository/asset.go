@@ -55,6 +55,8 @@ func (p *postgresAssetRepository) Create(asset *model.Asset) error {
 		return err
 	}
 
+	p.log.Info("Created asset", "name", asset.Name)
+
 	return nil
 }
 
@@ -93,10 +95,22 @@ func (p *postgresAssetRepository) Update(asset *model.Asset) error {
 		return ErrAssetNotFound
 	}
 
-	err = updateAsset(p.db, assetID, asset.Price)
+	var oldAsset *model.Asset
+	oldAsset, err = p.GetByName(asset.Name)
 	if err != nil {
-		p.log.Error("Failed to update asset", "name", asset.Name, "error", err)
+		p.log.Error("Failed to get asset by name", "name", asset.Name, "error", err)
 		return err
+	}
+
+	if oldAsset.Price != asset.Price {
+		err = updateAsset(p.db, assetID, asset.Price)
+		if err != nil {
+			p.log.Error("Failed to update asset", "name", asset.Name, "error", err)
+			return err
+		}
+		p.log.Info("Updated asset", "name", asset.Name)
+	} else {
+		p.log.Info("Asset is up to date", "name", asset.Name)
 	}
 
 	return nil
@@ -124,6 +138,8 @@ func (p *postgresAssetRepository) Delete(asset *model.Asset) error {
 		p.log.Error("Failed to delete asset", "name", asset.Name, "error", err)
 		return err
 	}
+
+	p.log.Info("Removed asset", "name", asset.Name)
 
 	return nil
 }

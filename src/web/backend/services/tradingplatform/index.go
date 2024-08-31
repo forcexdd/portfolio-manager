@@ -25,7 +25,6 @@ func (m *moexService) createOrUpdateIndex(index *model.Index) error {
 			if err != nil {
 				return err
 			}
-			m.log.Info("Created index", "name", index.Name)
 		}
 		return err
 	} else { // Found already existing index in database
@@ -33,7 +32,6 @@ func (m *moexService) createOrUpdateIndex(index *model.Index) error {
 		if err != nil {
 			return err
 		}
-		m.log.Info("Updated index", "name", index.Name)
 	}
 
 	return nil
@@ -69,7 +67,6 @@ func (m *moexService) removeOldIndexesFromDB(indexes []*model.Index) error {
 		if err != nil {
 			return err
 		}
-		m.log.Info("Removed index", "name", index.Name)
 	}
 
 	return nil

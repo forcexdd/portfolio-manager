@@ -50,7 +50,6 @@ func (m *moexService) ParseAllAssetsIntoDB() error {
 		if errors.Is(err, repository.ErrAssetNotFound) { // If we don't find any assets in DB it's alright
 			err = nil
 		} else {
-			m.log.Error("Failed getting all assets from DB", "error", err)
 			return err
 		}
 	}

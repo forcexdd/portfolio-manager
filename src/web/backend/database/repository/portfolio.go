@@ -68,6 +68,8 @@ func (p *postgresPortfolioRepository) Create(portfolio *model.Portfolio) error {
 		return err
 	}
 
+	p.log.Info("Created portfolio", "name", portfolio.Name)
+
 	return nil
 }
 
@@ -131,6 +133,8 @@ func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 		return err
 	}
 
+	p.log.Info("Updated portfolio", "name", portfolio.Name)
+
 	return nil
 }
 
@@ -156,6 +160,8 @@ func (p *postgresPortfolioRepository) Delete(portfolio *model.Portfolio) error {
 		p.log.Error("Failed to delete portfolio", "name", portfolio.Name, "error", err)
 		return err
 	}
+
+	p.log.Info("Removed portfolio", "name", portfolio.Name)
 
 	return nil
 }
@@ -278,7 +284,6 @@ func (p *postgresPortfolioRepository) addAssetToPortfolio(portfolioID, assetID, 
 	if err != nil {
 		return err
 	}
-	p.log.Info("Added asset to portfolio", "asset ID", assetID, "portfolio ID", portfolioID)
 
 	return nil
 }
@@ -295,11 +300,12 @@ func (p *postgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID,
 		return err
 	}
 
-	err = updatePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID, quantity)
-	if err != nil {
-		return err
+	if portfolioAssetRelationship.Quantity != quantity {
+		err = updatePortfolioAssetRelationship(p.db, portfolioAssetRelationship.ID, quantity)
+		if err != nil {
+			return err
+		}
 	}
-	p.log.Info("Updated asset in portfolio", "asset ID", assetID, "portfolio ID", portfolioID)
 
 	return nil
 }
