@@ -8,13 +8,21 @@ import (
 	"time"
 )
 
+const (
+	connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
+	logPath    = "portfolio_manager.log"
+)
+
 func main() {
 	start := time.Now()
 
-	log := logger.NewLogger()
-	const connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
+	log, err := logger.NewLogger(logPath)
+	if err != nil {
+		panic(err)
+	}
 
-	db, err := storage.NewStorage(connString, log)
+	var db *storage.Storage
+	db, err = storage.NewStorage(connString, log)
 	if err != nil {
 		panic(err)
 	}
@@ -36,6 +44,11 @@ func main() {
 	}
 
 	err = db.CloseConnection()
+	if err != nil {
+		panic(err)
+	}
+
+	err = log.Close()
 	if err != nil {
 		panic(err)
 	}
