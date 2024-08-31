@@ -8,16 +8,23 @@ import (
 	"time"
 )
 
-func (m *moexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, time.Time, error) {
+// beginDay - is day in which we start parsing in decreasing order from today (for example 1 for yesterday).
+// endDay - is day when we end parsing
+func (m *moexService) parseLatestAssets(beginDay, endDay int) ([]*moexmodels.AssetData, time.Time, error) {
+	if beginDay > endDay {
+		return nil, time.Time{}, errors.New("invalid time for parsing assets")
+	}
+
 	parseTime := getCurrentTime()
+	parseTime = parseTime.AddDate(0, 0, -beginDay)
 
 	allAssets, err := m.moexApiClient.GetAllAssets(formatTime(parseTime))
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	maxDays--
+	endDay--
 
-	for len(allAssets) == 0 && maxDays != 0 {
+	for len(allAssets) == 0 && endDay != 0 {
 		parseTime = parseTime.AddDate(0, 0, -1)
 
 		allAssets, err = m.moexApiClient.GetAllAssets(formatTime(parseTime))
@@ -25,10 +32,10 @@ func (m *moexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, t
 			return nil, time.Time{}, err
 		}
 
-		maxDays--
+		endDay--
 	}
 
-	if maxDays == 0 {
+	if endDay == 0 {
 		m.log.Error("Exceeded limit on max days before latest date")
 		return nil, time.Time{}, errors.New("exceeded limit on max days before latest date")
 	}

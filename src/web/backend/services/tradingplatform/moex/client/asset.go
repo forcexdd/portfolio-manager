@@ -5,7 +5,6 @@ import (
 	"errors"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
-	"net/http"
 	"strconv"
 )
 
@@ -34,7 +33,7 @@ func (m *MoexApiClient) GetAllAssets(time string) ([]*moexmodels.AssetData, erro
 }
 
 func (m *MoexApiClient) getAssetsData(url string, start int) ([]*moexmodels.AssetData, error) {
-	response, err := http.Get(url + strconv.Itoa(start))
+	response, err := sendGETRequest(url + strconv.Itoa(start))
 	if err != nil {
 		return nil, err
 	}

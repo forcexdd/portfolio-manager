@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-const maxDaysBeforeLatestDate = 15
-
 type AssetExchangeService interface {
 	ParseAllAssetsIntoDB() error
 	ParseAllIndexesIntoDB() error
@@ -40,7 +38,7 @@ func NewTradingPlatformService(assetRepository repository.AssetRepository, index
 func (m *moexService) ParseAllAssetsIntoDB() error {
 	var allAssets []*moexmodels.AssetData
 	var err error
-	allAssets, m.time, err = m.parseLatestAssets(maxDaysBeforeLatestDate)
+	allAssets, m.time, err = m.parseLatestAssets(minDaysBeforeLatestDate, maxDaysBeforeLatestDate)
 	if err != nil {
 		m.log.Error("Failed parsing latest assets", "error", err)
 		return err
