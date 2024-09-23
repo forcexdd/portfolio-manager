@@ -1,0 +1,32 @@
+{{template "base" .}}
+
+{{define "title"}}
+Manager
+{{end}}
+
+{{define "main"}}
+<div>
+    <link type="text/css" href="../static/manager.css" rel="stylesheet"/>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Quantity</th>
+            <th>Price</th>
+        </tr>
+        {{ range $asset := .assets }}
+        <tr>
+            <th>{{ $asset.Name }}</th>
+            <th>{{ $asset.Quantity }}</th>
+            <th>{{ $asset.Price }}</th>
+        </tr>
+        {{ end }}
+    </table>
+    <button type="button" id="delete-portfolio">Delete Portfolio</button>
+    <div>
+        <img src="data:image/svg+xml;base64,{{.PieChart}}" alt="pieChart" id="pieChartAssets">
+    </div>
+    <script type="module" src="../static/manager.js"></script>
+    <script type="module" src="../static/cookies.mjs"></script>
+    <script type="module" src="../static/const.mjs"></script>
+</div>
+{{ end }}

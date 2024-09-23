@@ -5,6 +5,8 @@ import (
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
+	"net/http"
 	"time"
 )
 
@@ -26,10 +28,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//db.DeleteStorage()
+	//err = db.DeleteStorage()
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	assetRepository := repository.NewAssetRepository(db.GetDB(), log)
 	indexRepository := repository.NewIndexRepository(db.GetDB(), log)
+  portfolioRepository := repository.NewPortfolioRepository(db.GetDb(), log)
 
 	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository, log)
 
@@ -40,11 +46,21 @@ func main() {
 
 	err = tradingPlatformService.ParseAllIndexesIntoDB()
 	if err != nil {
+
+	routeHandler := handler.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
+
+	http.HandleFunc("/static/", routeHandler.HandleStaticFiles)
+	http.HandleFunc("/", routeHandler.HandleHome)
+	http.HandleFunc("/following_index", routeHandler.HandleFollowingIndex)
+	http.HandleFunc("/manager", routeHandler.HandleManager)
+	http.HandleFunc("/add_portfolio", routeHandler.HandleAddPortfolio)
+	http.HandleFunc("/remove_portfolio", routeHandler.HandleRemovePortfolio)
+	http.HandleFunc("/render_following_index_table", routeHandler.HandleRenderFollowingIndexTable)
+	if err = http.ListenAndServe("localhost:8080", nil); err != nil {
 		panic(err)
 	}
 
-	err = db.CloseConnection()
-	if err != nil {
+	if err = db.CloseConnection(); err != nil {
 		panic(err)
 	}
 
