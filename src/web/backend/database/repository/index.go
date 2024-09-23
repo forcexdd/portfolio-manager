@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
@@ -27,49 +28,66 @@ type IndexRepository interface {
 	GetAll() ([]*model.Index, error)
 }
 
-type PostgresIndexRepository struct {
-	db *sql.DB
+type postgresIndexRepository struct {
+	db  *sql.DB
+	log logger.Logger
 }
 
-func NewIndexRepository(db *sql.DB) IndexRepository {
-	return &PostgresIndexRepository{db: db}
+func NewIndexRepository(db *sql.DB, log logger.Logger) IndexRepository {
+	return &postgresIndexRepository{
+		db:  db,
+		log: log,
+	}
 }
 
-func (p *PostgresIndexRepository) Create(index *model.Index) error {
+func (p *postgresIndexRepository) Create(index *model.Index) error {
 	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
+		p.log.Error("Failed to get indexID by name", "name", index.Name, "error", err)
 		return err
 	}
 	if indexID != 0 {
+		p.log.Warn("Index already exists in DB", "name", index.Name)
 		return ErrIndexAlreadyExists
 	}
 
 	var createdIndex *dtomodel.Index
 	createdIndex, err = createIndex(p.db, index.Name)
 	if err != nil {
+		p.log.Error("Failed to create index", "name", index.Name, "error", err)
 		return err
 	}
 	if index.AssetsFractionMap == nil {
+		p.log.Warn("Index does not have any associated assets", "name", index.Name)
 		return nil
 	} // If there are no assets then just create name
 
 	err = p.addManyAssetsToIndex(createdIndex.ID, index.AssetsFractionMap)
+	if err != nil {
+		p.log.Error("Failed to add assets to index", "name", index.Name, "error", err)
+		return err
+	}
 
-	return err
+	p.log.Info("Created index", "name", index.Name)
+
+	return nil
 }
 
-func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
+func (p *postgresIndexRepository) GetByName(name string) (*model.Index, error) {
 	indexID, err := getIndexIDByName(p.db, name)
 	if err != nil {
+		p.log.Error("Failed to get indexID by name", "name", name, "error", err)
 		return nil, err
 	}
 	if indexID == 0 {
+		p.log.Warn("Index does not exist in DB", "name", name)
 		return nil, ErrIndexNotFound
 	}
 
 	assetsFractionMap := make(map[*model.Asset]float64)
 	assetsFractionMap, err = p.getAssetsFractionMapByIndexID(indexID)
 	if err != nil {
+		p.log.Error("Failed to get assets fraction map by indexID", "ID", indexID, "error", err)
 		return nil, err
 	}
 
@@ -79,18 +97,21 @@ func (p *PostgresIndexRepository) GetByName(name string) (*model.Index, error) {
 	}, nil
 }
 
-func (p *PostgresIndexRepository) Update(index *model.Index) error {
+func (p *postgresIndexRepository) Update(index *model.Index) error {
 	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
+		p.log.Error("Failed to get indexID by name", "name", index.Name, "error", err)
 		return err
 	}
 	if indexID == 0 {
+		p.log.Warn("Index does not exist in DB", "name", index.Name)
 		return ErrIndexNotFound
 	}
 
 	var oldIndex *model.Index
 	oldIndex, err = p.GetByName(index.Name)
 	if err != nil {
+		p.log.Error("Failed to get index by name", "name", index.Name, "error", err)
 		return err
 	}
 
@@ -102,43 +123,61 @@ func (p *PostgresIndexRepository) Update(index *model.Index) error {
 
 	err = p.addOrUpdateNewIndexAssets(indexID, oldAssetIDFractionMap, newAssetIDFractionMap)
 	if err != nil {
+		p.log.Error("Failed to update index assets", "name", index.Name, "error", err)
 		return err
 	}
 
 	err = p.deleteOldIndexAssets(indexID, oldAssetIDFractionMap, newAssetIDFractionMap)
+	if err != nil {
+		p.log.Error("Failed to delete old index assets", "name", index.Name, "error", err)
+		return err
+	}
 
-	return err
+	p.log.Info("Updated index", "name", index.Name)
+
+	return nil
 }
 
-func (p *PostgresIndexRepository) Delete(index *model.Index) error {
+func (p *postgresIndexRepository) Delete(index *model.Index) error {
 	indexID, err := getIndexIDByName(p.db, index.Name)
 	if err != nil {
+		p.log.Error("Failed to get indexID by name", "name", index.Name, "error", err)
 		return err
 	}
 	if indexID == 0 {
+		p.log.Warn("Index does not exist in DB", "name", index.Name)
 		return ErrIndexNotFound
 	}
 
 	err = p.deleteAllAssetsFromIndex(indexID)
 	if err != nil {
+		p.log.Error("Failed to delete all assets from index", "name", index.Name, "error", err)
 		return err
 	}
 
 	err = deleteIndex(p.db, indexID)
+	if err != nil {
+		p.log.Error("Failed to delete index", "name", index.Name, "error", err)
+		return err
+	}
 
-	return err
+	p.log.Info("Removed index", "name", index.Name)
+
+	return nil
 }
 
-func (p *PostgresIndexRepository) DeleteByName(name string) error {
+func (p *postgresIndexRepository) DeleteByName(name string) error {
 	return p.Delete(&model.Index{Name: name, AssetsFractionMap: nil})
 }
 
-func (p *PostgresIndexRepository) GetAll() ([]*model.Index, error) {
+func (p *postgresIndexRepository) GetAll() ([]*model.Index, error) {
 	dtoIndexes, err := getAllIndexes(p.db)
 	if err != nil {
+		p.log.Error("Failed to get all indexes", "error", err)
 		return nil, err
 	}
 	if len(dtoIndexes) == 0 {
+		p.log.Warn("No indexes found in DB")
 		return nil, ErrIndexNotFound
 	}
 
@@ -147,6 +186,7 @@ func (p *PostgresIndexRepository) GetAll() ([]*model.Index, error) {
 	for _, dtoIndex := range dtoIndexes {
 		index, err = p.GetByName(dtoIndex.Name)
 		if err != nil {
+			p.log.Error("Failed to get index from DB", "name", dtoIndex.Name, "error", err)
 			return nil, err
 		}
 
@@ -161,7 +201,7 @@ func (p *PostgresIndexRepository) GetAll() ([]*model.Index, error) {
 	return indexes, nil
 }
 
-func (p *PostgresIndexRepository) getAssetsFractionMapByIndexID(indexID int) (map[*model.Asset]float64, error) {
+func (p *postgresIndexRepository) getAssetsFractionMapByIndexID(indexID int) (map[*model.Asset]float64, error) {
 	indexAssets, err := getAllIndexAssetsByIndexID(p.db, indexID)
 	if err != nil {
 		return nil, err
@@ -198,7 +238,7 @@ func (p *PostgresIndexRepository) getAssetsFractionMapByIndexID(indexID int) (ma
 	return assetsFractionMap, err
 }
 
-func (p *PostgresIndexRepository) addManyAssetsToIndex(indexID int, assetsFractionMap map[*model.Asset]float64) error {
+func (p *postgresIndexRepository) addManyAssetsToIndex(indexID int, assetsFractionMap map[*model.Asset]float64) error {
 	assetsIDFractionMap, err := p.convertAssetsFractionMapToAssetsIDFractionMap(assetsFractionMap)
 	if err != nil {
 		return err
@@ -214,7 +254,7 @@ func (p *PostgresIndexRepository) addManyAssetsToIndex(indexID int, assetsFracti
 	return nil
 }
 
-func (p *PostgresIndexRepository) addOrUpdateNewIndexAssets(indexID int, oldAssetIDFractionMap, newAssetIDFractionMap map[int]float64) error {
+func (p *postgresIndexRepository) addOrUpdateNewIndexAssets(indexID int, oldAssetIDFractionMap, newAssetIDFractionMap map[int]float64) error {
 	for assetID, fraction := range newAssetIDFractionMap {
 		_, assetExists := oldAssetIDFractionMap[assetID]
 
@@ -234,18 +274,21 @@ func (p *PostgresIndexRepository) addOrUpdateNewIndexAssets(indexID int, oldAsse
 	return nil
 }
 
-func (p *PostgresIndexRepository) addAssetToIndex(indexID int, assetID int, fraction float64) error {
+func (p *postgresIndexRepository) addAssetToIndex(indexID int, assetID int, fraction float64) error {
 	indexAsset, err := createIndexAsset(p.db, indexID, assetID)
 	if err != nil {
 		return err
 	}
 
 	_, err = createIndexAssetRelationship(p.db, indexAsset.ID, fraction)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
-func (p *PostgresIndexRepository) updateIndexAsset(indexID, assetID int, fraction float64) error {
+func (p *postgresIndexRepository) updateIndexAsset(indexID, assetID int, fraction float64) error {
 	indexAssetID, err := getIndexAssetIDByIndexIdAndAssetID(p.db, indexID, assetID)
 	if err != nil {
 		return err
@@ -257,12 +300,17 @@ func (p *PostgresIndexRepository) updateIndexAsset(indexID, assetID int, fractio
 		return err
 	}
 
-	err = updateIndexAssetRelationship(p.db, indexAssetRelationship.ID, fraction)
+	if indexAssetRelationship.Fraction != fraction {
+		err = updateIndexAssetRelationship(p.db, indexAssetRelationship.ID, fraction)
+		if err != nil {
+			return err
+		}
+	}
 
-	return err
+	return nil
 }
 
-func (p *PostgresIndexRepository) deleteOldIndexAssets(indexID int, oldAssetIDFractionMap, newAssetIDFractionMap map[int]float64) error {
+func (p *postgresIndexRepository) deleteOldIndexAssets(indexID int, oldAssetIDFractionMap, newAssetIDFractionMap map[int]float64) error {
 	for assetID, _ := range oldAssetIDFractionMap {
 		_, assetExists := newAssetIDFractionMap[assetID]
 		if !assetExists {
@@ -276,7 +324,7 @@ func (p *PostgresIndexRepository) deleteOldIndexAssets(indexID int, oldAssetIDFr
 	return nil
 }
 
-func (p *PostgresIndexRepository) deleteAssetFromTablesConnectedToIndex(indexID int, assetID int) error {
+func (p *postgresIndexRepository) deleteAssetFromTablesConnectedToIndex(indexID int, assetID int) error {
 	indexAssetID, err := getIndexAssetIDByIndexIdAndAssetID(p.db, indexID, assetID)
 	if err != nil {
 		return err
@@ -298,7 +346,7 @@ func (p *PostgresIndexRepository) deleteAssetFromTablesConnectedToIndex(indexID 
 	return err
 }
 
-func (p *PostgresIndexRepository) deleteAllAssetsFromIndex(indexID int) error {
+func (p *postgresIndexRepository) deleteAllAssetsFromIndex(indexID int) error {
 	indexAssets, err := getAllIndexAssetsByIndexID(p.db, indexID)
 	if err != nil {
 		return err
@@ -325,7 +373,7 @@ func (p *PostgresIndexRepository) deleteAllAssetsFromIndex(indexID int) error {
 	return nil
 }
 
-func (p *PostgresIndexRepository) convertAssetsFractionMapToAssetsIDFractionMap(assetsFractionMap map[*model.Asset]float64) (map[int]float64, error) {
+func (p *postgresIndexRepository) convertAssetsFractionMapToAssetsIDFractionMap(assetsFractionMap map[*model.Asset]float64) (map[int]float64, error) {
 	assetsNameFractionMap := make(map[string]float64)
 	for asset, quantity := range assetsFractionMap {
 		assetsNameFractionMap[asset.Name] = quantity
@@ -339,7 +387,7 @@ func (p *PostgresIndexRepository) convertAssetsFractionMapToAssetsIDFractionMap(
 	return assetsIDFractionMap, nil
 }
 
-func (p *PostgresIndexRepository) convertAssetsNameFractionMapToAssetsIDFractionMap(assetsFractionMap map[string]float64) (map[int]float64, error) {
+func (p *postgresIndexRepository) convertAssetsNameFractionMapToAssetsIDFractionMap(assetsFractionMap map[string]float64) (map[int]float64, error) {
 	assetsIDFractionMap := make(map[int]float64)
 	for assetName, fraction := range assetsFractionMap {
 		assetID, err := getAssetIDByName(p.db, assetName)
