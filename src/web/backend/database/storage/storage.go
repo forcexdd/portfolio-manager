@@ -136,7 +136,7 @@ func getAllTables() map[string]string {
 		"index_assets_relationship": `
 		CREATE TABLE IF NOT EXISTS index_assets_relationship (
 			id SERIAL PRIMARY KEY,
-			fraction DECIMAL(18, 16) NOT NULL,
+			fraction DECIMAL(18, 15) NOT NULL,
 			index_assets_id INT NOT NULL,
 			FOREIGN KEY (index_assets_id) REFERENCES index_assets(id)
 		);`,

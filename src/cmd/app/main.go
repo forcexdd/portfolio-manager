@@ -4,8 +4,8 @@ import (
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 	"net/http"
 	"time"
 )
@@ -31,11 +31,10 @@ func main() {
 	//err = db.DeleteStorage()
 	//if err != nil {
 	//	panic(err)
-	//}
 
 	assetRepository := repository.NewAssetRepository(db.GetDB(), log)
 	indexRepository := repository.NewIndexRepository(db.GetDB(), log)
-  portfolioRepository := repository.NewPortfolioRepository(db.GetDb(), log)
+	portfolioRepository := repository.NewPortfolioRepository(db.GetDB(), log)
 
 	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository, log)
 
@@ -46,6 +45,8 @@ func main() {
 
 	err = tradingPlatformService.ParseAllIndexesIntoDB()
 	if err != nil {
+		panic(err)
+	}
 
 	routeHandler := handler.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
 
