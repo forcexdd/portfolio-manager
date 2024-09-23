@@ -5,13 +5,12 @@ import (
 	"errors"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
-	"net/http"
 )
 
 func (m *MoexApiClient) GetAllIndexes() ([]*moexmodels.IndexData, error) {
-	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics.json?lang=en"
+	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics.json?lang=" + language
 
-	response, err := http.Get(url)
+	response, err := sendGETRequest(url)
 	if err != nil {
 		return nil, err
 	}

@@ -3,31 +3,34 @@ package storage
 import (
 	"database/sql"
 	"errors"
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	_ "github.com/lib/pq"
 )
 
 type Storage struct {
 	db          *sql.DB
+	log         logger.Logger
 	connStr     string
 	allTables   map[string]string
 	tablesOrder []string
 }
 
-func NewStorage(connString string) (*Storage, error) {
-	db, err := openConnection(connString)
-	if err != nil {
-		return nil, err
-	}
-
+func NewStorage(connString string, log logger.Logger) (*Storage, error) {
 	storage := &Storage{
-		db:          db,
+		log:         log,
 		connStr:     connString,
 		allTables:   getAllTables(),
 		tablesOrder: getTablesOrder(),
 	}
 
+	err := storage.openConnection()
+	if err != nil {
+		return nil, err
+	}
+
 	err = storage.db.Ping()
 	if err != nil {
+		storage.log.Error("Lost connection to DB")
 		return nil, err
 	}
 
@@ -39,31 +42,50 @@ func NewStorage(connString string) (*Storage, error) {
 	return storage, err
 }
 
-func openConnection(connString string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", connString)
-	if err != nil {
-		return nil, err
+func (s *Storage) openConnection() error {
+	if len(s.connStr) == 0 {
+		s.log.Warn("No connection string provided for DB")
+		return errors.New("no connection string provided")
 	}
 
-	return db, nil
+	db, err := sql.Open("postgres", s.connStr)
+	if err != nil {
+		s.log.Error("Failed connection to DB")
+		return err
+	}
+
+	s.db = db
+	s.log.Info("Connected to DB")
+
+	return nil
 }
 
 func (s *Storage) CloseConnection() error {
-	return s.db.Close()
+	err := s.db.Close()
+	if err != nil {
+		s.log.Error("Failed closing DB")
+		return err
+	}
+
+	s.log.Info("Closed connection with DB")
+
+	return nil
 }
 
-func (s *Storage) GetDb() *sql.DB {
+func (s *Storage) GetDB() *sql.DB {
 	return s.db
 }
 
 func (s *Storage) DeleteStorage() error {
 	err := s.db.Ping()
 	if err != nil {
+		s.log.Error("Lost connection to DB")
 		return err
 	}
 
 	err = s.dropAllTables()
 	if err != nil {
+		s.log.Error("Failed dropping all tables")
 		return err
 	}
 
@@ -130,6 +152,7 @@ func (s *Storage) dropAllTables() error {
 	for _, table := range s.tablesOrder {
 		err := s.DropTable(table)
 		if err != nil {
+			s.log.Error("Failed dropping table", "name", table)
 			return err
 		}
 	}
@@ -141,6 +164,7 @@ func (s *Storage) addAllTables() error {
 	for _, table := range s.tablesOrder {
 		err := s.CreateTable(table)
 		if err != nil {
+			s.log.Error("Failed creating table", "name", table)
 			return err
 		}
 	}
@@ -151,22 +175,32 @@ func (s *Storage) addAllTables() error {
 func (s *Storage) DropTable(tableName string) error {
 	_, isTable := s.allTables[tableName]
 	if !isTable {
+		s.log.Warn("Table does not exists", "name", tableName)
 		return errors.New("table not found")
 	}
 
 	query := "DROP TABLE IF EXISTS " + tableName + " CASCADE;"
 	_, err := s.db.Exec(query)
+	if err != nil {
+		s.log.Error("Failed dropping table", "name", tableName)
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func (s *Storage) CreateTable(tableName string) error {
 	query, isTable := s.allTables[tableName]
 	if !isTable {
+		s.log.Warn("Table does not exists", "name", tableName)
 		return errors.New("table not found")
 	}
 
 	_, err := s.db.Exec(query)
+	if err != nil {
+		s.log.Error("Failed creating table", "name", tableName)
+		return err
+	}
 
-	return err
+	return nil
 }

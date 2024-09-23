@@ -5,12 +5,11 @@ import (
 	"errors"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
-	"net/http"
 	"strconv"
 )
 
 func (m *MoexApiClient) GetAllIndexAssets(time string, index *model.IndexData) ([]*model.IndexAssetsData, error) {
-	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics/" + index.IndexID + ".json?lang=en&date=" + time + "&start="
+	url := m.BaseUrl + "statistics/engines/stock/markets/index/analytics/" + index.IndexID + ".json?lang=" + language + "&date=" + time + "&start="
 	start := 0
 	var allData []*model.IndexAssetsData
 	hasData := true
@@ -33,7 +32,7 @@ func (m *MoexApiClient) GetAllIndexAssets(time string, index *model.IndexData) (
 }
 
 func (m *MoexApiClient) getIndexAssetsData(url string, start int) ([]*model.IndexAssetsData, error) {
-	response, err := http.Get(url + strconv.Itoa(start))
+	response, err := sendGETRequest(url + strconv.Itoa(start))
 	if err != nil {
 		return nil, err
 	}

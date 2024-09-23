@@ -8,16 +8,23 @@ import (
 	"time"
 )
 
-func (m *MoexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, time.Time, error) {
+// beginDay - is day in which we start parsing in decreasing order from today (for example 1 for yesterday).
+// endDay - is day when we end parsing
+func (m *moexService) parseLatestAssets(beginDay, endDay int) ([]*moexmodels.AssetData, time.Time, error) {
+	if beginDay > endDay {
+		return nil, time.Time{}, errors.New("invalid time for parsing assets")
+	}
+
 	parseTime := getCurrentTime()
+	parseTime = parseTime.AddDate(0, 0, -beginDay)
 
 	allAssets, err := m.moexApiClient.GetAllAssets(formatTime(parseTime))
 	if err != nil {
 		return nil, time.Time{}, err
 	}
-	maxDays--
+	endDay--
 
-	for len(allAssets) == 0 && maxDays != 0 {
+	for len(allAssets) == 0 && endDay != 0 {
 		parseTime = parseTime.AddDate(0, 0, -1)
 
 		allAssets, err = m.moexApiClient.GetAllAssets(formatTime(parseTime))
@@ -25,13 +32,20 @@ func (m *MoexService) parseLatestAssets(maxDays int) ([]*moexmodels.AssetData, t
 			return nil, time.Time{}, err
 		}
 
-		maxDays--
+		endDay--
 	}
+
+	if endDay == 0 {
+		m.log.Error("Exceeded limit on max days before latest date")
+		return nil, time.Time{}, errors.New("exceeded limit on max days before latest date")
+	}
+
+	m.log.Info("Parsing date", "date", formatTime(parseTime))
 
 	return allAssets, parseTime, nil
 }
 
-func (m *MoexService) createOrUpdateAsset(asset *model.Asset) error {
+func (m *moexService) createOrUpdateAsset(asset *model.Asset) error {
 	_, err := m.AssetRepository.GetByName(asset.Name)
 	if err != nil {
 		if errors.Is(err, repository.ErrAssetNotFound) { // Can't find asset in database
@@ -61,7 +75,7 @@ func removeAssetByNameFromSlice(assets []*model.Asset, name string) []*model.Ass
 	return assets
 }
 
-func (m *MoexService) removeOldAssetsFromDB(assets []*model.Asset) error {
+func (m *moexService) removeOldAssetsFromDB(assets []*model.Asset) error {
 	for _, asset := range assets {
 		err := m.AssetRepository.Delete(asset)
 		if err != nil {
