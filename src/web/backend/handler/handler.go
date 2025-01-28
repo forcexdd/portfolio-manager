@@ -3,11 +3,13 @@ package handler
 import (
 	"encoding/base64"
 	"errors"
+	"net/http"
+	"path/filepath"
+	"sort"
+
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/drawer/chart"
-	"net/http"
-	"path/filepath"
 )
 
 type RouteHandler struct {
@@ -330,6 +332,8 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 		usersUnusedInIndexAssets := getUsersNotInIndexAssetsAsHTMLTableAssets(&index.AssetsFractionMap, &portfolio.AssetsQuantityMap, portfolioPrice)
 
 		*curAssets = append(*curAssets, *usersUnusedInIndexAssets...)
+		sort.Sort(byName(*curAssets))
+
 		data := make(map[string]any)
 		//data["chart"] = "todo_chart_base64_here" TODO
 		data[allAssetsKey] = *curAssets

@@ -13,6 +13,7 @@ import (
 const (
 	connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
 	logPath    = "portfolio_manager.log"
+	url        = "localhost:8080"
 )
 
 func main() {
@@ -57,7 +58,7 @@ func main() {
 	http.HandleFunc("/add_portfolio", routeHandler.HandleAddPortfolio)
 	http.HandleFunc("/remove_portfolio", routeHandler.HandleRemovePortfolio)
 	http.HandleFunc("/render_following_index_table", routeHandler.HandleRenderFollowingIndexTable)
-	if err = http.ListenAndServe("localhost:8080", nil); err != nil {
+	if err = http.ListenAndServe(url, nil); err != nil {
 		panic(err)
 	}
 
