@@ -84,8 +84,7 @@ func (p *postgresIndexRepository) GetByName(name string) (*model.Index, error) {
 		return nil, ErrIndexNotFound
 	}
 
-	assetsFractionMap := make(map[*model.Asset]float64)
-	assetsFractionMap, err = p.getAssetsFractionMapByIndexID(indexID)
+	assetsFractionMap, err := p.getAssetsFractionMapByIndexID(indexID)
 	if err != nil {
 		p.log.Error("Failed to get assets fraction map by indexID", "ID", indexID, "error", err)
 		return nil, err
@@ -115,11 +114,15 @@ func (p *postgresIndexRepository) Update(index *model.Index) error {
 		return err
 	}
 
-	newAssetIDFractionMap := make(map[int]float64)
-	newAssetIDFractionMap, err = p.convertAssetsFractionMapToAssetsIDFractionMap(index.AssetsFractionMap)
+	newAssetIDFractionMap, err := p.convertAssetsFractionMapToAssetsIDFractionMap(index.AssetsFractionMap)
+	if err != nil {
+		return err
+	}
 
-	oldAssetIDFractionMap := make(map[int]float64)
-	oldAssetIDFractionMap, err = p.convertAssetsFractionMapToAssetsIDFractionMap(oldIndex.AssetsFractionMap)
+	oldAssetIDFractionMap, err := p.convertAssetsFractionMapToAssetsIDFractionMap(oldIndex.AssetsFractionMap)
+	if err != nil {
+		return err
+	}
 
 	err = p.addOrUpdateNewIndexAssets(indexID, oldAssetIDFractionMap, newAssetIDFractionMap)
 	if err != nil {
@@ -311,7 +314,7 @@ func (p *postgresIndexRepository) updateIndexAsset(indexID, assetID int, fractio
 }
 
 func (p *postgresIndexRepository) deleteOldIndexAssets(indexID int, oldAssetIDFractionMap, newAssetIDFractionMap map[int]float64) error {
-	for assetID, _ := range oldAssetIDFractionMap {
+	for assetID := range oldAssetIDFractionMap {
 		_, assetExists := newAssetIDFractionMap[assetID]
 		if !assetExists {
 			err := p.deleteAssetFromTablesConnectedToIndex(indexID, assetID) // Just delete from connected tables. Shouldn't delete asset itself

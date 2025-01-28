@@ -84,8 +84,7 @@ func (p *postgresPortfolioRepository) GetByName(name string) (*model.Portfolio, 
 		return nil, ErrPortfolioNotFound
 	}
 
-	assetsQuantityMap := make(map[*model.Asset]int)
-	assetsQuantityMap, err = p.getAssetsQuantityMapByPortfolioID(portfolioID)
+	assetsQuantityMap, err := p.getAssetsQuantityMapByPortfolioID(portfolioID)
 	if err != nil {
 		p.log.Error("Failed to get assets associated to portfolioID", "ID", portfolioID, "error", err)
 		return nil, err
@@ -115,11 +114,15 @@ func (p *postgresPortfolioRepository) Update(portfolio *model.Portfolio) error {
 		return err
 	}
 
-	newAssetIDQuantityMap := make(map[int]int)
-	newAssetIDQuantityMap, err = p.convertAssetsQuantityMapToAssetsIDQuantityMap(portfolio.AssetsQuantityMap)
+	newAssetIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(portfolio.AssetsQuantityMap)
+	if err != nil {
+		return err
+	}
 
-	oldAssetIDQuantityMap := make(map[int]int)
-	oldAssetIDQuantityMap, err = p.convertAssetsQuantityMapToAssetsIDQuantityMap(oldPortfolio.AssetsQuantityMap)
+	oldAssetIDQuantityMap, err := p.convertAssetsQuantityMapToAssetsIDQuantityMap(oldPortfolio.AssetsQuantityMap)
+	if err != nil {
+		return err
+	}
 
 	err = p.addOrUpdateNewPortfolioAssets(portfolioID, oldAssetIDQuantityMap, newAssetIDQuantityMap)
 	if err != nil {
@@ -311,7 +314,7 @@ func (p *postgresPortfolioRepository) updatePortfolioAsset(portfolioID, assetID,
 }
 
 func (p *postgresPortfolioRepository) deleteOldPortfolioAssets(portfolioID int, oldAssetIDQuantityMap, newAssetIDQuantityMap map[int]int) error {
-	for assetID, _ := range oldAssetIDQuantityMap {
+	for assetID := range oldAssetIDQuantityMap {
 		_, assetExists := newAssetIDQuantityMap[assetID]
 		if !assetExists {
 			err := p.deleteAssetFromTablesConnectedToPortfolio(portfolioID, assetID) // Just delete from connected tables. Shouldn't delete asset itself
