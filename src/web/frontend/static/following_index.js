@@ -34,7 +34,7 @@ function removeUnusedAssets() {
     let table = document.getElementById("following-index-table");
     for (let i = 1; i < table.rows.length; i++) {
         let suggested_fraction = parseFloat(table.rows[i].cells[4].innerText);
-        
+
         if (suggested_fraction === 0) {
             table.deleteRow(i);
             i--;
@@ -76,7 +76,7 @@ function colorDifference() {
         let cells = rows[i].getElementsByTagName("td");
         let diff = parseFloat(cells[5].innerText);
         let index_fraction = parseFloat(cells[4].innerText)
-        
+
         if (index_fraction === 0) {
             rows[i].style.color = "red";
         }
@@ -92,15 +92,15 @@ function colorDifference() {
 
 renderButtonHTML.onclick = (e) => {
     e.preventDefault();
-    
+
     // let budget = budgetInputHTML.value
     let index = indexHTML.value
-    
+
     if (index === "select") {
         alert("Please select an index");
         return;
     }
-    
+
     let formData = new FormData();
     formData.append("index", index);
     // formData.append("budget", budget);
@@ -119,7 +119,7 @@ renderButtonHTML.onclick = (e) => {
         for (let removeButton of document.getElementsByClassName("remove-asset-button")) {
             removeButton.onclick = (_) => removeAsset(removeButton.parentElement.parentElement);
         }
-        
+
         document.getElementById("remove-unused-assets").onclick = (_) => removeUnusedAssets();
         document.getElementById("save-changes").onclick = (_) => saveChanges();
     })

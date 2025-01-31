@@ -15,5 +15,5 @@ export function getCookie(cname) {
 }
 
 export default class cookies {
-    
+
 }

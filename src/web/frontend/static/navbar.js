@@ -26,7 +26,7 @@ function chooseRightSection(optionsHTML) {
     }
 
     let endpoint = getFirstEndpoint();
-    
+
     switch (endpoint)
     {
         case "manager":

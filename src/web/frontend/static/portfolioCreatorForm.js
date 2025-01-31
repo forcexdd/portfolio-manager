@@ -92,7 +92,7 @@ submitButtonHTML.onclick = async (e) => {
     let responseText = "Error! Try again later!";
     let successDivHTML = document.getElementById("success_text");
     successDivHTML.style.color = 'red'
-    
+
     e.preventDefault();
     if (!validPortfolioName(portfolioNameHTML.value)) {
         responseText = "Error! Invalid name!";
@@ -119,14 +119,14 @@ submitButtonHTML.onclick = async (e) => {
             body: formData
         });
 
-        
+
         if (response.ok) {
             responseText = "Success! Portfolio was added.";
             successDivHTML.style.color = 'green'
         } else if (response.status === 409) {
             responseText = "Error! This name is already taken!";
         }
-        
+
         successDivHTML.innerText = responseText;
     } catch (error) {
         console.error("Error submitting form:", error);

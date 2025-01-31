@@ -8,14 +8,14 @@ deleteButtonHTML.onclick = async (e) => {
     if(!confirm('Are you sure?')) {
         return
     }
-    
+
     let portfolio = cookies.getCookie(constants.portfolioNameCookie);
-    
+
     e.preventDefault()
 
     let formData = new FormData();
     formData.append(constants.portfolioNameFormKey, portfolio);
-    
+
     try {
         let response = await fetch("/remove_portfolio", {
             method: "POST",
