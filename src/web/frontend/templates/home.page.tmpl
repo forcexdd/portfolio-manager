@@ -5,7 +5,11 @@
 {{end}}
 
 {{define "main"}}
-    <h1>
-        Nothing here yet!
-    </h1>
+    <h1>Portfolio Manager</h1>
+        <form action="/shutdown" method="post"
+          onsubmit="return confirm('Are you sure you want to shut down the server?')">
+        <button type="submit" style="color: red; margin-top: 20px;">
+            Shutdown Server
+        </button>
+    </form>
 {{end}}
