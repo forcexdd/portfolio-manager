@@ -7,20 +7,49 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/drawer/chart"
 )
 
 type RouteHandler struct {
+	server              *http.Server
+	db                  *storage.Storage
 	portfolioRepository repository.PortfolioRepository
 	assetRepository     repository.AssetRepository
 	indexRepository     repository.IndexRepository
+	log                 logger.Logger
 }
 
-func NewRouteHandler(p repository.PortfolioRepository,
-	s repository.AssetRepository, i repository.IndexRepository) *RouteHandler {
-	return &RouteHandler{portfolioRepository: p, assetRepository: s, indexRepository: i}
+func NewRouteHandler(server *http.Server, db *storage.Storage,
+	p repository.PortfolioRepository, a repository.AssetRepository,
+	i repository.IndexRepository, log logger.Logger) *RouteHandler {
+	return &RouteHandler{
+		server:              server,
+		db:                  db,
+		portfolioRepository: p,
+		assetRepository:     a,
+		indexRepository:     i,
+		log:                 log,
+	}
+}
+
+func (r *RouteHandler) HandleShutdown(w http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := r.db.CloseConnection(); err != nil {
+		return
+	}
+
+	if err := r.server.Close(); err != nil {
+		r.log.Error("Server failed to close", "error", err)
+		return
+	}
 }
 
 func (r *RouteHandler) HandleStaticFiles(w http.ResponseWriter, request *http.Request) {
