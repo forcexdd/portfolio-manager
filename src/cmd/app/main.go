@@ -52,12 +52,14 @@ func main() {
 			parsingErr <- err
 			return
 		}
+		log.Info("Finished parsing assets")
 
 		err = tradingPlatformService.ParseAllIndexesIntoDB()
 		if err != nil {
 			parsingErr <- err
 			return
 		}
+		log.Info("Finished parsing indexes")
 	}()
 
 	routeHandler := handler.NewRouteHandler(
