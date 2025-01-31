@@ -1,13 +1,14 @@
 package main
 
 import (
+	"net/http"
+	"sync"
+
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
-	"net/http"
-	"time"
 )
 
 const (
@@ -17,8 +18,7 @@ const (
 )
 
 func main() {
-	start := time.Now()
-
+	var wg sync.WaitGroup
 	log, err := logger.NewLogger(logPath)
 	if err != nil {
 		panic(err)
@@ -33,24 +33,47 @@ func main() {
 	//if err != nil {
 	//	panic(err)
 
+	server := &http.Server{
+		Addr: url,
+	}
+
 	assetRepository := repository.NewAssetRepository(db.GetDB(), log)
 	indexRepository := repository.NewIndexRepository(db.GetDB(), log)
 	portfolioRepository := repository.NewPortfolioRepository(db.GetDB(), log)
 
-	tradingPlatformService := tradingplatform.NewTradingPlatformService(assetRepository, indexRepository, log)
+	tradingPlatformService := tradingplatform.NewTradingPlatformService(
+		assetRepository,
+		indexRepository,
+		log,
+	)
 
-	err = tradingPlatformService.ParseAllAssetsIntoDB()
-	if err != nil {
-		panic(err)
-	}
+	parsingErr := make(chan error)
+	go func() {
+		defer wg.Done()
 
-	err = tradingPlatformService.ParseAllIndexesIntoDB()
-	if err != nil {
-		panic(err)
-	}
+		err := tradingPlatformService.ParseAllAssetsIntoDB()
+		if err != nil {
+			parsingErr <- err
+			return
+		}
 
-	routeHandler := handler.NewRouteHandler(portfolioRepository, assetRepository, indexRepository)
+		err = tradingPlatformService.ParseAllIndexesIntoDB()
+		if err != nil {
+			parsingErr <- err
+			return
+		}
+	}()
 
+	routeHandler := handler.NewRouteHandler(
+		server,
+		db,
+		portfolioRepository,
+		assetRepository,
+		indexRepository,
+		log,
+	)
+
+	http.HandleFunc("/shutdown", routeHandler.HandleShutdown)
 	http.HandleFunc("/static/", routeHandler.HandleStaticFiles)
 	http.HandleFunc("/", routeHandler.HandleHome)
 	http.HandleFunc("/following_index", routeHandler.HandleFollowingIndex)
@@ -58,18 +81,26 @@ func main() {
 	http.HandleFunc("/add_portfolio", routeHandler.HandleAddPortfolio)
 	http.HandleFunc("/remove_portfolio", routeHandler.HandleRemovePortfolio)
 	http.HandleFunc("/render_following_index_table", routeHandler.HandleRenderFollowingIndexTable)
-	if err = http.ListenAndServe(url, nil); err != nil {
-		panic(err)
+
+	serverErr := make(chan error)
+	go func() {
+		log.Info("Server starting", "url", url)
+		if err := server.ListenAndServe(); err != nil {
+			serverErr <- err
+		}
+	}()
+
+	select {
+	case err := <-serverErr:
+		switch {
+		case err == http.ErrServerClosed:
+			log.Info("Server closed")
+		default:
+			log.Error("Server failed to start", "error", err)
+		}
+	case err := <-parsingErr:
+		log.Error("Parsing failed", "error", err)
 	}
 
-	if err = db.CloseConnection(); err != nil {
-		panic(err)
-	}
-
-	err = log.Close()
-	if err != nil {
-		panic(err)
-	}
-
-	log.Info("App closed", "time passed", time.Since(start))
+	log.Close()
 }
