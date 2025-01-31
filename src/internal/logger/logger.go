@@ -50,6 +50,7 @@ func (s *slogger) Warn(msg string, keysAndValues ...interface{}) {
 }
 
 func (s *slogger) Close() error {
+	s.Info("Logger closing...")
 	if s.file != nil {
 		return s.file.Close()
 	}
