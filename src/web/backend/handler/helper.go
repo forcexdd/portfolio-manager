@@ -2,11 +2,12 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	"net/http"
 	"strconv"
 	"text/template"
+
+	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 )
 
 // TODO rename package and move some functions somewhere

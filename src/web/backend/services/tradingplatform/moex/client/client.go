@@ -19,7 +19,7 @@ func sendGETRequest(url string) (*http.Response, error) {
 	var err error
 	var response *http.Response
 	var i int
-	for i = 0; wasResponse == false && i < maxRetries; i++ {
+	for i = 0; !wasResponse && i < maxRetries; i++ {
 		response, err = http.Get(url)
 		if err != nil {
 			return nil, err
@@ -36,7 +36,7 @@ func sendGETRequest(url string) (*http.Response, error) {
 			}
 		}
 
-		if wasResponse == false {
+		if !wasResponse {
 			err = response.Body.Close() // Since we are in a loop we should close without defer
 			if err != nil {
 				return nil, err

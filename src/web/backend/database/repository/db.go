@@ -3,6 +3,7 @@ package repository
 import (
 	"database/sql"
 	"errors"
+
 	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
 )
 

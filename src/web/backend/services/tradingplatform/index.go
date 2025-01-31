@@ -2,10 +2,11 @@ package tradingplatform
 
 import (
 	"errors"
+	"time"
+
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
-	"time"
 )
 
 func (m *moexService) parseIndexAssets(index *moexmodels.IndexData, parseTime time.Time) ([]*moexmodels.IndexAssetsData, error) {

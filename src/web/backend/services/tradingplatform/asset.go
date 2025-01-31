@@ -2,10 +2,11 @@ package tradingplatform
 
 import (
 	"errors"
+	"time"
+
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
-	"time"
 )
 
 // beginDay - is day in which we start parsing in decreasing order from today (for example 1 for yesterday).

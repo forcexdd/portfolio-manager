@@ -3,9 +3,10 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
 	"strconv"
+
+	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 )
 
 func (m *MoexApiClient) GetAllIndexAssets(time string, index *model.IndexData) ([]*model.IndexAssetsData, error) {

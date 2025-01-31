@@ -3,8 +3,9 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
+
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 )
 
 func (m *MoexApiClient) GetAllIndexes() ([]*moexmodels.IndexData, error) {

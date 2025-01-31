@@ -3,6 +3,7 @@ package storage
 import (
 	"database/sql"
 	"errors"
+
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	_ "github.com/lib/pq"
 )

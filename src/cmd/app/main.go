@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"sync"
 
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
@@ -18,7 +17,6 @@ const (
 )
 
 func main() {
-	var wg sync.WaitGroup
 	log, err := logger.NewLogger(logPath)
 	if err != nil {
 		panic(err)
@@ -49,8 +47,6 @@ func main() {
 
 	parsingErr := make(chan error)
 	go func() {
-		defer wg.Done()
-
 		err := tradingPlatformService.ParseAllAssetsIntoDB()
 		if err != nil {
 			parsingErr <- err

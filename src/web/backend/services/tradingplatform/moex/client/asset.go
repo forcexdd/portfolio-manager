@@ -3,9 +3,10 @@ package client
 import (
 	"encoding/json"
 	"errors"
-	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 	"io"
 	"strconv"
+
+	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 )
 
 // Maybe it's better idea to return set map[*model.AssetData]struct{}
