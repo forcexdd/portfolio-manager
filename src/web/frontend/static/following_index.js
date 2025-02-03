@@ -78,14 +78,14 @@ function colorDifference() {
         let index_fraction = parseFloat(cells[4].innerText)
 
         if (index_fraction === 0) {
-            rows[i].style.color = "red";
+            rows[i].style.color = "green";
         }
 
         if (Math.abs(diff) <= 0.05) {
         } else if (diff < 0) {
-            rows[i].style.color = "blue";
-        } else {
             rows[i].style.color = "red";
+        } else {
+            rows[i].style.color = "green";
         }
     }
 }
