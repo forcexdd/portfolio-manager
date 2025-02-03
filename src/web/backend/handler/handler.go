@@ -8,9 +8,9 @@ import (
 	"sort"
 
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/drawer/chart"
 )
 

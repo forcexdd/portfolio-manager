@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/database/storage"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 )

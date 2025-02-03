@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/model"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 )
 

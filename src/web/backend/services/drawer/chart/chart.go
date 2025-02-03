@@ -3,7 +3,7 @@ package chart
 import (
 	"bytes"
 
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/model"
 	"github.com/wcharczuk/go-chart/v2"
 )
 

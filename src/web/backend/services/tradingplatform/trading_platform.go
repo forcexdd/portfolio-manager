@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/model"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/client"
 	moexmodels "github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform/moex/model"
 )
@@ -113,8 +113,7 @@ func (m *moexService) ParseAllIndexesIntoDB() error {
 			continue
 		}
 
-		newAssetsFractionMap := make(map[*model.Asset]float64)
-		newAssetsFractionMap, err = m.createAssetsFractionMapFromIndexAssets(indexAssets)
+		newAssetsFractionMap, err := m.createAssetsFractionMapFromIndexAssets(indexAssets)
 		if err != nil {
 			if errors.Is(err, repository.ErrAssetNotFound) { // There is no such asset in database (something wrong with index API response so we skip this particular index)
 				m.log.Warn("No asset from index in DB", "name", index.IndexID)

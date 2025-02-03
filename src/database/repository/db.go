@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
-	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
+	dtomodel "github.com/forcexdd/portfoliomanager/src/database/model"
 )
 
 /*

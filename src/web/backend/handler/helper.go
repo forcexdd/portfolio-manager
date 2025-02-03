@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"text/template"
 
-	"github.com/forcexdd/portfoliomanager/src/web/backend/database/repository"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	"github.com/forcexdd/portfoliomanager/src/database/repository"
+	"github.com/forcexdd/portfoliomanager/src/model"
 )
 
 // TODO rename package and move some functions somewhere

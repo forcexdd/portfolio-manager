@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/forcexdd/portfoliomanager/src/internal/logger"
-	dtomodel "github.com/forcexdd/portfoliomanager/src/web/backend/database/model"
-	"github.com/forcexdd/portfoliomanager/src/web/backend/model"
+	dtomodel "github.com/forcexdd/portfoliomanager/src/database/model"
+	"github.com/forcexdd/portfoliomanager/src/model"
 )
 
 type PortfolioRepository interface {
