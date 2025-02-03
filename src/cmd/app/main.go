@@ -79,6 +79,8 @@ func main() {
 	http.HandleFunc("/add_portfolio", routeHandler.HandleAddPortfolio)
 	http.HandleFunc("/remove_portfolio", routeHandler.HandleRemovePortfolio)
 	http.HandleFunc("/render_following_index_table", routeHandler.HandleRenderFollowingIndexTable)
+	http.HandleFunc("/add_asset", routeHandler.HandleAddAsset)
+	http.HandleFunc("/remove_asset", routeHandler.HandleRemoveAsset)
 
 	serverErr := make(chan error)
 	go func() {

@@ -377,3 +377,95 @@ func (r *RouteHandler) HandleRenderFollowingIndexTable(w http.ResponseWriter, re
 		}
 	}
 }
+
+func (r *RouteHandler) HandleAddAsset(w http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := request.Cookie(portfolioCookieName)
+	if err != nil || cookie.Value == "" {
+		http.Error(w, "No portfolio selected", http.StatusBadRequest)
+		return
+	}
+
+	portfolio, err := r.portfolioRepository.GetByName(cookie.Value)
+	if err != nil {
+		if errors.Is(err, repository.ErrPortfolioNotFound) {
+			http.Error(w, "Portfolio not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := request.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	assetName := request.FormValue("assetName")
+	if assetName == "" {
+		http.Error(w, "Asset name required", http.StatusBadRequest)
+		return
+	}
+
+	for portolioAsset := range portfolio.AssetsQuantityMap {
+		if portolioAsset.Name == assetName {
+			portfolio.AssetsQuantityMap[portolioAsset]++
+		}
+	}
+
+	if err := r.portfolioRepository.Update(portfolio); err != nil {
+		http.Error(w, "Failed to update portfolio", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, request, request.Referer(), http.StatusSeeOther)
+}
+
+func (r *RouteHandler) HandleRemoveAsset(w http.ResponseWriter, request *http.Request) {
+	if request.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	cookie, err := request.Cookie(portfolioCookieName)
+	if err != nil || cookie.Value == "" {
+		http.Error(w, "No portfolio selected", http.StatusBadRequest)
+		return
+	}
+
+	portfolio, err := r.portfolioRepository.GetByName(cookie.Value)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if err := request.ParseForm(); err != nil {
+		http.Error(w, "Error parsing form", http.StatusBadRequest)
+		return
+	}
+
+	assetName := request.FormValue("assetName")
+	if assetName == "" {
+		return
+	}
+
+	for portolioAsset, currentQuantity := range portfolio.AssetsQuantityMap {
+		if portolioAsset.Name == assetName {
+			if currentQuantity > 1 {
+				portfolio.AssetsQuantityMap[portolioAsset]--
+			} else {
+				delete(portfolio.AssetsQuantityMap, portolioAsset)
+			}
+		}
+	}
+
+	if err := r.portfolioRepository.Update(portfolio); err != nil {
+		return
+	}
+
+	http.Redirect(w, request, request.Referer(), http.StatusSeeOther)
+}

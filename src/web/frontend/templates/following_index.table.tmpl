@@ -16,8 +16,20 @@
             <td class="asset-current-fraction">{{ printf "%.2f" $asset.CurrentFraction }}</td>
             <td class="asset-suggested-fraction">{{ printf "%.2f" $asset.SuggestedFraction }}</td>
             <td class="asset-difference-in-fraction">{{ printf "%.2f" $asset.DifferenceInFraction }}</td>
-            <td><button class="add-asset-button">+</button></td>
-            <td><button class="remove-asset-button">-</button></td>
+            <td>
+                <form action="/add_asset" method="POST">
+                    <input type="hidden" name="assetName" value="{{ $asset.Name }}">
+                    <input type="hidden" name="index" value="{{ $.indexForm }}">
+                    <button type="submit" class="add-asset-button">+</button>
+                </form>
+            </td>
+            <td>
+                <form action="/remove_asset" method="POST">
+                    <input type="hidden" name="assetName" value="{{ $asset.Name }}">
+                    <input type="hidden" name="index" value="{{ $.indexForm }}">
+                    <button type="submit" class="remove-asset-button">-</button>
+                </form>
+            </td>
         </tr>
         {{ end }}
     </table>
