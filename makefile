@@ -1,8 +1,12 @@
-.PHONY: run_web close_web
+.PHONY: open_db close_db run_web close_web
 
-run_web :
-	@docker compose -f src/deployments/docker-compose.yml up -d; \
-	go run src/cmd/app/web.go
+open_db :
+	@docker compose -f src/deployments/docker-compose.yml up -d
 
-close_web:
+close_db :
 	@docker compose -f src/deployments/docker-compose.yml down
+
+run_web : open_db
+	@go run src/cmd/app/web.go
+
+close_web: close_db
