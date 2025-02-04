@@ -3,20 +3,14 @@ package main
 import (
 	"net/http"
 
-	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/database/repository"
 	"github.com/forcexdd/portfoliomanager/src/database/storage"
+	"github.com/forcexdd/portfoliomanager/src/internal/logger"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/handler"
 	"github.com/forcexdd/portfoliomanager/src/web/backend/services/tradingplatform"
 )
 
-const (
-	connString = "postgresql://postgres:postgres@localhost:5432/portfolio_manager?sslmode=disable"
-	logPath    = "portfolio_manager.log"
-	url        = "localhost:8080"
-)
-
-func main() {
+func runWeb() {
 	log, err := logger.NewLogger(logPath)
 	if err != nil {
 		panic(err)
@@ -27,9 +21,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	//err = db.DeleteStorage()
-	//if err != nil {
-	//	panic(err)
 
 	server := &http.Server{
 		Addr: url,
