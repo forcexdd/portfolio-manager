@@ -19,6 +19,7 @@ func (m *MoexApiClient) GetAllAssets(time string) ([]*moexmodels.AssetData, erro
 	for hasData {
 		newData, err := m.getAssetsData(url, start)
 		if err != nil {
+			print(url, start)
 			return nil, err
 		}
 
@@ -81,19 +82,19 @@ func parseAssetDataFromCurrentPrices(assetData *moexmodels.CurrentPricesData) ([
 	var allData []*moexmodels.AssetData
 
 	for _, asset := range assetData.Data {
-		if len(asset) != 8 {
+		if len(asset) != 9 {
 			return nil, errors.New("invalid asset data")
 		}
 
 		newAsset := &moexmodels.AssetData{
 			TradeDate:      toString(asset[0]),
-			BoardID:        toString(asset[1]),
-			SecID:          toString(asset[2]),
-			TradeTime:      toString(asset[3]),
-			CurPrice:       toFloat64(asset[4]),
-			LastPrice:      toFloat64(asset[5]),
-			LegalClose:     toFloat64(asset[6]),
-			TradingSession: int(toFloat64(asset[7])),
+			BoardID:        toString(asset[2]),
+			SecID:          toString(asset[3]),
+			TradeTime:      toString(asset[4]),
+			CurPrice:       toFloat64(asset[5]),
+			LastPrice:      toFloat64(asset[6]),
+			LegalClose:     toFloat64(asset[7]),
+			TradingSession: int(toFloat64(asset[8])),
 		}
 
 		allData = append(allData, newAsset)
