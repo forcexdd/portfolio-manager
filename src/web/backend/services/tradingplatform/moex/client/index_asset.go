@@ -2,7 +2,7 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
+	// "errors"
 	"io"
 	"strconv"
 
@@ -80,9 +80,9 @@ func parseIndexAssetsDataFromIndexAnalytics(indexAssetsData *model.IndexAnalytic
 	var allData []*model.IndexAssetsData
 
 	for _, indexAsset := range indexAssetsData.Data {
-		if len(indexAsset) != 7 {
-			return nil, errors.New("invalid index asset data")
-		}
+		// if len(indexAsset) != 7 {
+		// 	return nil, errors.New("invalid index asset data")
+		// }
 
 		newIndexAsset := &model.IndexAssetsData{
 			IndexID:        toString(indexAsset[0]),
