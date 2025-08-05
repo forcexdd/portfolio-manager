@@ -19,7 +19,7 @@ type slogger struct {
 }
 
 func NewLogger(filePath string) (Logger, error) {
-	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,6 @@ func NewLogger(filePath string) (Logger, error) {
 		logger: slog.New(slog.NewTextHandler(file, nil)),
 		file:   file,
 	}
-	//slog.SetDefault(newLogger.logger)
 
 	return newLogger, nil
 }
