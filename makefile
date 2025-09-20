@@ -3,6 +3,7 @@ export GOPROXY = https://proxy.golang.org,direct
 
 open_db :
 	@docker compose -f src/deployments/docker-compose.yml up -d
+	@until docker exec deployments-db-1 pg_isready -U postgres; do sleep 1; done
 
 close_db :
 	@docker compose -f src/deployments/docker-compose.yml down
