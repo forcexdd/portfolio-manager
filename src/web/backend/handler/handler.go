@@ -411,10 +411,16 @@ func (r *RouteHandler) HandleAddAsset(w http.ResponseWriter, request *http.Reque
 		return
 	}
 
+	wasAsset := false
 	for portolioAsset := range portfolio.AssetsQuantityMap {
 		if portolioAsset.Name == assetName {
 			portfolio.AssetsQuantityMap[portolioAsset]++
+			wasAsset = true
 		}
+	}
+
+	if !wasAsset {
+		portfolio.AssetsQuantityMap[&model.Asset{Name: assetName}] = 1
 	}
 
 	if err := r.portfolioRepository.Update(portfolio); err != nil {
