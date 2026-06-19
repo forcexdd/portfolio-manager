@@ -1,0 +1,81 @@
+PortfolioAssetsCollection:
+  get:
+    operationId: listPortfolioAssets
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas.yaml#/components/schemas/PortfolioAsset'
+  post:
+    operationId: upsertPortfolioAsset
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas.yaml#/components/schemas/UpsertPortfolioAssetReq'
+    responses:
+      '204':
+        description: No Content
+PortfolioAssetItem:
+  delete:
+    operationId: deletePortfolioAsset
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: No Content
+PortfolioAssetLot:
+  put:
+    operationId: updatePortfolioAssetLotSize
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas.yaml#/components/schemas/UpdateLotSizeReq'
+    responses:
+      '204':
+        description: No Content

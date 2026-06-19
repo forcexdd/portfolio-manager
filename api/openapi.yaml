@@ -1,0 +1,25 @@
+openapi: 3.0.3
+info:
+  title: Portfolio Manager API
+  version: 1.0.0
+paths:
+  /api/portfolios:
+    $ref: './paths/portfolios.yaml#/PortfoliosCollection'
+  /api/portfolios/import:
+    $ref: './paths/portfolios.yaml#/PortfolioImport'
+  /api/portfolios/{id}:
+    $ref: './paths/portfolios.yaml#/PortfolioItem'
+  /api/portfolios/{id}/export:
+    $ref: './paths/portfolios.yaml#/PortfolioExport'
+  /api/portfolios/{id}/assets:
+    $ref: './paths/portfolio_assets.yaml#/PortfolioAssetsCollection'
+  /api/portfolios/{id}/assets/{asset_id}:
+    $ref: './paths/portfolio_assets.yaml#/PortfolioAssetItem'
+  /api/portfolios/{id}/assets/{asset_id}/lot:
+    $ref: './paths/portfolio_assets.yaml#/PortfolioAssetLot'
+  /api/assets:
+    $ref: './paths/assets.yaml#/AssetsCollection'
+  /api/indexes:
+    $ref: './paths/indexes.yaml#/IndexesCollection'
+  /api/analysis:
+    $ref: './paths/analysis.yaml#/Analysis'

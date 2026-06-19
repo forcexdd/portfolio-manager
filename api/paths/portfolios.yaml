@@ -1,0 +1,73 @@
+PortfoliosCollection:
+  get:
+    operationId: listPortfolios
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas.yaml#/components/schemas/Portfolio'
+  post:
+    operationId: createPortfolio
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas.yaml#/components/schemas/CreatePortfolioReq'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas.yaml#/components/schemas/Portfolio'
+PortfolioItem:
+  delete:
+    operationId: deletePortfolio
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '204':
+        description: No Content
+PortfolioExport:
+  get:
+    operationId: exportPortfolio
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas.yaml#/components/schemas/ExportPortfolioResult'
+PortfolioImport:
+  post:
+    operationId: importPortfolio
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas.yaml#/components/schemas/ImportPortfolioReq'
+    responses:
+      '201':
+        description: Created
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas.yaml#/components/schemas/Portfolio'

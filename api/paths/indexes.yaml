@@ -1,0 +1,12 @@
+IndexesCollection:
+  get:
+    operationId: listIndexes
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas.yaml#/components/schemas/Index'

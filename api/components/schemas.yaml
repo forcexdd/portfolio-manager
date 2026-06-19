@@ -1,0 +1,179 @@
+components:
+  schemas:
+    Portfolio:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required:
+        - id
+        - name
+    CreatePortfolioReq:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    Asset:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+      required:
+        - id
+        - name
+        - price
+    UpdateLotSizeReq:
+      type: object
+      properties:
+        lot_size:
+          type: integer
+          format: int64
+      required:
+        - lot_size
+    PortfolioAsset:
+      type: object
+      properties:
+        asset:
+          $ref: '#/components/schemas/Asset'
+        quantity:
+          type: integer
+          format: int64
+        lot_size:
+          type: integer
+          format: int64
+      required:
+        - asset
+        - quantity
+        - lot_size
+    UpsertPortfolioAssetReq:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+          format: int64
+        quantity:
+          type: integer
+          format: int64
+      required:
+        - asset_id
+        - quantity
+    Index:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      required:
+        - id
+        - name
+    AssetDiff:
+      type: object
+      properties:
+        asset_id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        current_quantity:
+          type: integer
+          format: int64
+        current_fraction:
+          type: number
+          format: double
+        index_fraction:
+          type: number
+          format: double
+        fraction_diff:
+          type: number
+          format: double
+        target_quantity:
+          type: integer
+          format: int64
+        difference:
+          type: integer
+          format: int64
+        lot_size:
+          type: integer
+          format: int64
+        action:
+          type: string
+      required:
+        - asset_id
+        - name
+        - price
+        - current_quantity
+        - current_fraction
+        - index_fraction
+        - fraction_diff
+        - target_quantity
+        - difference
+        - lot_size
+        - action
+    AnalysisResult:
+      type: object
+      properties:
+        total_value:
+          type: number
+          format: double
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssetDiff'
+      required:
+        - total_value
+        - assets
+    ImportExportAsset:
+      type: object
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+          format: int64
+        lot_size:
+          type: integer
+          format: int64
+      required:
+        - name
+        - quantity
+        - lot_size
+    ImportPortfolioReq:
+      type: object
+      properties:
+        name:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportExportAsset'
+      required:
+        - name
+        - assets
+    ExportPortfolioResult:
+      type: object
+      properties:
+        name:
+          type: string
+        assets:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportExportAsset'
+      required:
+        - name
+        - assets

@@ -1,0 +1,12 @@
+AssetsCollection:
+  get:
+    operationId: listAssets
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas.yaml#/components/schemas/Asset'

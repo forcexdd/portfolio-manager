@@ -1,0 +1,48 @@
+Project PortfolioManager {
+  database_type: 'PostgreSQL'
+}
+
+Table portfolios {
+  id bigserial [pk]
+  name varchar(64) [unique, not null]
+}
+
+Table assets {
+  id bigserial [pk]
+  name varchar(32) [unique, not null]
+  price decimal(32, 16) [not null]
+}
+
+Table portfolio_assets {
+  portfolio_id bigint
+  asset_id bigint
+  quantity bigint [not null, default: 0]
+  lot_size bigint [not null, default: 1]
+  indexes {
+    (portfolio_id, asset_id) [pk]
+  }
+}
+
+Table indexes {
+  id bigserial [pk]
+  name varchar(64) [unique, not null]
+}
+
+Table index_assets {
+  index_id bigint
+  asset_id bigint
+  fraction decimal(18, 15) [not null]
+  indexes {
+    (index_id, asset_id) [pk]
+  }
+}
+
+Table parse_logs {
+  date varchar(10) [pk]
+  parsed_at timestamp [default: `now()`]
+}
+
+Ref: portfolio_assets.portfolio_id > portfolios.id [delete: cascade]
+Ref: portfolio_assets.asset_id > assets.id [delete: cascade]
+Ref: index_assets.index_id > indexes.id [delete: cascade]
+Ref: index_assets.asset_id > assets.id [delete: cascade]

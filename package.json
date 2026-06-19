@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "@dbml/cli": "^9.0.0-alpha.1",
+    "@redocly/cli": "^2.34.0"
+  }
+}
