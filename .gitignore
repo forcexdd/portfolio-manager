@@ -1,3 +1,15 @@
 .DS_Store
 .idea
+Thumbs.db
 *.log
+dbml-error.log
+node_modules/
+package-lock.json
+npm-debug.log*
+bin/
+db/schema.sql
+internal/repository/db/*
+!internal/repository/db/generate.go
+api/bundle.yaml
+internal/transport/http/api/*
+!internal/transport/http/api/generate.go

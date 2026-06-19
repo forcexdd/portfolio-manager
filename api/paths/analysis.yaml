@@ -1,0 +1,23 @@
+Analysis:
+  get:
+    operationId: analyzePortfolio
+    parameters:
+      - name: portfolio_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+      - name: index_id
+        in: query
+        required: true
+        schema:
+          type: integer
+          format: int64
+    responses:
+      '200':
+        description: OK
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas.yaml#/components/schemas/AnalysisResult'

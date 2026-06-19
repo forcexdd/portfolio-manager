@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Manager Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/web/styles.css">
+</head>
+<body>
+    <div class="dashboard-layout">
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-icon"></div>
+                <h2>PM Pro</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" id="btn-analysis" onclick="switchView('analysis')">
+                    <span class="icon">📊</span> Analysis Panel
+                </button>
+                <button class="nav-item" id="btn-portfolios" onclick="switchView('portfolios')">
+                    <span class="icon">💼</span> Portfolios
+                </button>
+                <button class="nav-item" id="btn-assets" onclick="switchView('assets')">
+                    <span class="icon">🪙</span> System Assets
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <p>System Live</p>
+                <span class="status-indicator"></span>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="breadcrumb">
+                    <span class="text-muted">Console</span> / <span id="current-view-title">Analysis Panel</span>
+                </div>
+                <div class="quick-actions" id="global-portfolio-selector-container">
+                    <select id="global-portfolio-select" onchange="onGlobalPortfolioChange()">
+                        <option value="">Loading portfolios...</option>
+                    </select>
+                </div>
+            </header>
+            <div class="content-container" id="view-port"></div>
+        </main>
+    </div>
+    <script src="/web/app.js"></script>
+</body>
+</html>
